@@ -3,6 +3,7 @@ package com.document.demo.service.impl;
 import com.document.demo.dto.request.DocumentRequest;
 import com.document.demo.dto.request.FilterRequest;
 import com.document.demo.dto.request.TrackingRequest;
+import com.document.demo.dto.request.UpdateDocumentRequest;
 import com.document.demo.exception.InvalidEnumValueException;
 import com.document.demo.exception.ResourceAlreadyExistsException;
 import com.document.demo.exception.ResourceNotFoundException;
@@ -23,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -88,7 +90,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional
-    public Documents updateDocument(String id, DocumentRequest document) {
+    public Documents updateDocument(String id, UpdateDocumentRequest document) {
         Documents existingDocument = findById(id);
 
         if (document.getNumber() != null && !document.getNumber().equals(existingDocument.getNumber()) 
@@ -117,7 +119,7 @@ public class DocumentServiceImpl implements DocumentService {
         // Handle attachment update
         if (document.getFile() != null && !document.getFile().isEmpty()) {
             changes.put("attachment", new ChangeLog());
-            handleAttachmentUpdate(existingDocument, document);
+            handleAttachmentUpdate(existingDocument, document.getFile());
         }
 
         Documents updatedDocument = documentRepository.save(existingDocument);
@@ -134,14 +136,14 @@ public class DocumentServiceImpl implements DocumentService {
         return updatedDocument;
     }
 
-    private void handleAttachmentUpdate(Documents existingDocument, DocumentRequest document) {
+    private void handleAttachmentUpdate(Documents existingDocument, MultipartFile file) {
         // Delete existing attachment if exists
         if (existingDocument.getAttachment() != null) {
             s3Service.deleteFile(existingDocument.getAttachment());
         }
 
         // Store new file
-        String fileName = s3Service.uploadFile(document.getFile());
+        String fileName = s3Service.uploadFile(file);
         existingDocument.setAttachment(fileName);
     }
 

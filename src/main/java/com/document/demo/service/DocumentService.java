@@ -2,6 +2,7 @@ package com.document.demo.service;
 
 import com.document.demo.dto.request.DocumentRequest;
 import com.document.demo.dto.request.FilterRequest;
+import com.document.demo.dto.request.UpdateDocumentRequest;
 import com.document.demo.models.Documents;
 import com.document.demo.models.enums.DocumentStatus;
 import com.document.demo.models.enums.DocumentType;
@@ -18,7 +19,7 @@ import java.util.Map;
 
 public interface DocumentService {
     Documents createDocument(DocumentRequest document) throws IOException;
-    Documents updateDocument(String id, DocumentRequest document) throws FileUploadException;
+    Documents updateDocument(String id, UpdateDocumentRequest document) throws FileUploadException;
     void deleteDocument(String id);
     Documents findById(String id);
     Documents findByNumber(String number);

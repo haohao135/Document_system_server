@@ -1,10 +1,8 @@
 package com.document.demo.controller;
 
-import com.document.demo.dto.request.DistributeRequest;
-import com.document.demo.dto.request.DocumentRequest;
-import com.document.demo.dto.request.SearchRequest;
-import com.document.demo.dto.request.FilterRequest;
+import com.document.demo.dto.request.*;
 import com.document.demo.dto.response.*;
+import com.document.demo.exception.ResourceNotFoundException;
 import com.document.demo.models.Distribution;
 import com.document.demo.models.Documents;
 import com.document.demo.models.enums.DocumentStatus;
@@ -21,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -72,31 +71,48 @@ public class DocumentController {
     }
     @PostMapping("/update/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<DocumentResponse> updateDocument(
-            @Valid @ModelAttribute DocumentRequest request, @PathVariable String id) throws IOException{
-        Documents document = documentService.updateDocument(id, request);
-        DocumentResponse response = DocumentResponse.builder()
-                .documentId(document.getDocumentId())
-                .number(document.getNumber())
-                .title(document.getTitle())
-                .content(document.getContent())
-                .issueDate(document.getIssueDate())
-                .receivedDate(document.getReceivedDate())
-                .sendDate(document.getSendDate())
-                .expirationDate(document.getExpirationDate())
-                .agencyUnit(document.getAgencyUnit())
-                .type(document.getType())
-                .urgencyLevel(document.getUrgencyLevel())
-                .attachment(document.getAttachment())
-                .keywords(document.getKeywords())
-                .logNote(document.getLogNote())
-                .status(document.getStatus())
-                .createdAt(document.getCreatedAt())
-                .creator(document.getCreateBy())
-                .secretLevel(document.getSecretLevel())
-                .build();
+    public ResponseEntity<?> updateDocument(
+            @Valid @ModelAttribute UpdateDocumentRequest request,
+            @PathVariable String id) {
+        log.info("Update Document with id {}: {}", id, request);
+        try {
+            Documents document = documentService.updateDocument(id, request);
+            DocumentResponse response = DocumentResponse.builder()
+                    .documentId(document.getDocumentId())
+                    .number(document.getNumber())
+                    .title(document.getTitle())
+                    .content(document.getContent())
+                    .issueDate(document.getIssueDate())
+                    .receivedDate(document.getReceivedDate())
+                    .sendDate(document.getSendDate())
+                    .expirationDate(document.getExpirationDate())
+                    .agencyUnit(document.getAgencyUnit())
+                    .type(document.getType())
+                    .urgencyLevel(document.getUrgencyLevel())
+                    .attachment(document.getAttachment())
+                    .keywords(document.getKeywords())
+                    .logNote(document.getLogNote())
+                    .status(document.getStatus())
+                    .createdAt(document.getCreatedAt())
+                    .creator(document.getCreateBy())
+                    .secretLevel(document.getSecretLevel())
+                    .build();
 
-        return ResponseEntity.ok(response);
+            return ResponseEntity.ok(new SuccessResponse(
+                "Document updated successfully",
+                response
+            ));
+        } catch (ResourceNotFoundException e) {
+            log.error("Document not found: ", e);
+            return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("Document not found with id: " + id));
+        } catch (Exception e) {
+            log.error("Error updating document: ", e);
+            return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("Error updating document: " + e.getMessage()));
+        }
     }
 
     // TODO: Implement the distributeIncomingDocument method
@@ -378,6 +394,32 @@ public class DocumentController {
             return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse("Error filtering documents: " + e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated() and (hasRole('ADMIN') or @documentPermissionEvaluator.isDocumentCreator(#id))")
+    public ResponseEntity<?> deleteDocument(@PathVariable String id) {
+        log.info("Delete Document with id: {}", id);
+        try {
+            documentService.deleteDocument(id);
+            return ResponseEntity.ok(new SuccessResponse(
+                "Document deleted successfully",
+                null
+            ));
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(e.getMessage()));
+        } catch (AccessDeniedException e) {
+            return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse("You don't have permission to delete this document"));
+        } catch (Exception e) {
+            log.error("Error deleting document: ", e);
+            return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("Error deleting document: " + e.getMessage()));
         }
     }
 } 
