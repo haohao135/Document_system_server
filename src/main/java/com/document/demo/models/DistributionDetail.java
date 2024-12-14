@@ -18,4 +18,5 @@ public class DistributionDetail {
     private String receivedId;
     private LocalDateTime timestamp;
     private List<String> commentId;
+    private List<String> documentsId;
 }
