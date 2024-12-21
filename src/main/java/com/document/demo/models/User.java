@@ -1,129 +1,118 @@
 package com.document.demo.models;
 
+import com.document.demo.models.enums.UserRole;
+import com.document.demo.models.enums.UserStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-@Document
-public class User {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Document(collection = "users")
+public class User implements UserDetails {
     @Id
     private String userId;
+
+    @NotBlank(message = "Username is required")
+    @Indexed(unique = true)
     private String username;
+
+    @NotBlank(message = "Password is required")
     private String password;
-    private String avatar;
+
+    @Builder.Default
+    private String avatar = "default-avatar.png";
+
+    @Builder.Default
+    private String background = "default-background.jpg";
+
+    @NotBlank(message = "Full name is required")
     private String fullName;
+
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email is invalid")
+    @Indexed(unique = true)
     private String email;
+
+    @NotBlank(message = "Phone is required")
+    private String phone;
+
     private String position;
-    private String role;
-    private String status;
-    private List<String> folderId;
-    private List<String> commentId;
-    private List<String> documentId;
-    private List<String> distributionId;
 
+    @Builder.Default
+    @NotNull(message = "Role is required")
+    @Enumerated(EnumType.STRING)
+    private UserRole role = UserRole.USER;
 
-    public String getUserId() {
-        return userId;
+    @Builder.Default
+    @NotNull(message = "Status is required")
+    @Enumerated(EnumType.STRING)
+    private UserStatus status = UserStatus.INACTIVE;
+
+    @DBRef
+    private List<Folder> folders = new ArrayList<>();
+
+    @DBRef
+    private List<Documents> documents = new ArrayList<>();
+
+    @DBRef
+    private Department department;
+
+    @DBRef
+    private List<Distribution> sentDistributions = new ArrayList<>();
+
+    @DBRef
+    private List<Distribution> receivedDistributions = new ArrayList<>();
+
+    // UserDetails implementation
+    @Override
+    @JsonIgnore
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    @Override
+    @JsonIgnore
+    public boolean isAccountNonExpired() {
+        return true;
     }
 
-    public String getUsername() {
-        return username;
+    @Override
+    @JsonIgnore
+    public boolean isAccountNonLocked() {
+        return status != UserStatus.LOCKED;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    @Override
+    @JsonIgnore
+    public boolean isCredentialsNonExpired() {
+        return true;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getAvatar() {
-        return avatar;
-    }
-
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPosition() {
-        return position;
-    }
-
-    public void setPosition(String position) {
-        this.position = position;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public List<String> getFolderId() {
-        return folderId;
-    }
-
-    public void setFolderId(List<String> folderId) {
-        this.folderId = folderId;
-    }
-
-    public List<String> getCommentId() {
-        return commentId;
-    }
-
-    public void setCommentId(List<String> commentId) {
-        this.commentId = commentId;
-    }
-
-    public List<String> getDocumentId() {
-        return documentId;
-    }
-
-    public void setDocumentId(List<String> documentId) {
-        this.documentId = documentId;
-    }
-
-    public List<String> getDistributionId() {
-        return distributionId;
-    }
-
-    public void setDistributionId(List<String> distributionId) {
-        this.distributionId = distributionId;
+    @Override
+    @JsonIgnore
+    public boolean isEnabled() {
+        return status == UserStatus.ACTIVE;
     }
 }
