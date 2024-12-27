@@ -19,8 +19,9 @@ import jakarta.persistence.Enumerated;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 @Document(collection = "documents")
-public class Documents {
+public class Documents implements Cloneable{
     @Id
     private String documentId;
 
@@ -76,4 +77,13 @@ public class Documents {
 
     @DBRef
     private List<Distribution> distributions;
+
+    @Override
+    public Documents clone() {
+        try {
+            return (Documents) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
 }

@@ -1,17 +1,22 @@
 package com.document.demo.service.impl;
 
 import com.document.demo.dto.request.DocumentRequest;
-import com.document.demo.models.Documents;
-import com.document.demo.models.User;
+import com.document.demo.dto.request.TrackingRequest;
 import com.document.demo.exception.InvalidEnumValueException;
 import com.document.demo.exception.ResourceAlreadyExistsException;
 import com.document.demo.exception.ResourceNotFoundException;
+import com.document.demo.models.Documents;
+import com.document.demo.models.User;
 import com.document.demo.models.enums.DocumentStatus;
+import com.document.demo.models.enums.TrackingActionType;
+import com.document.demo.models.enums.TrackingEntityType;
 import com.document.demo.models.enums.UrgencyLevel;
 import com.document.demo.repository.DocumentRepository;
 import com.document.demo.service.CloudinaryService;
 import com.document.demo.service.DocumentService;
+import com.document.demo.service.TrackingService;
 import com.document.demo.service.UserService;
+import com.document.demo.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
@@ -20,6 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+
+import static com.document.demo.utils.ChangeLogUtils.buildDocumentChanges;
 
 @Service
 @Slf4j
@@ -28,6 +36,8 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentRepository documentRepository;
     private final UserService userService;
     private final CloudinaryService cloudinaryService;
+    private final TrackingService trackingService;
+    private final SecurityUtils securityUtils;
 
     @Override
     @Transactional
@@ -60,13 +70,29 @@ public class DocumentServiceImpl implements DocumentService {
             document.setAttachment(attachmentUrl);
         }
 
-        return documentRepository.save(documents);
+        documents = documentRepository.save(documents);
+        
+        // Track document creation
+        trackingService.track(TrackingRequest.builder()
+            .actor(documents.getCreateBy())
+            .entityType(TrackingEntityType.DOCUMENT)
+            .entityId(documents.getDocumentId())
+            .action(TrackingActionType.CREATE)
+            .metadata(Map.of(
+                "documentNumber", documents.getNumber(),
+                "documentType", documents.getType(),
+                "urgencyLevel", documents.getUrgencyLevel().toString()
+            ))
+            .build());
+            
+        return documents;
     }
 
     @Override
     @Transactional
     public Documents updateDocument(String id, DocumentRequest document) throws FileUploadException {
         Documents existingDocument = findById(id);
+        Documents copyOfExistingDocument = existingDocument.clone();
 
         if (document.getNumber() != null && !document.getNumber().equals(existingDocument.getNumber()) 
             && documentRepository.existsByNumber(document.getNumber())) {
@@ -124,6 +150,16 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         existingDocument.setUpdatedAt(LocalDateTime.now());
+        
+        // Track document update with changes
+        trackingService.track(TrackingRequest.builder()
+            .actor(existingDocument.getCreateBy())
+            .entityType(TrackingEntityType.DOCUMENT)
+            .entityId(id)
+            .action(TrackingActionType.UPDATE)
+            .changes(buildDocumentChanges(copyOfExistingDocument, existingDocument))
+            .build());
+            
         return documentRepository.save(existingDocument);
     }
 
@@ -132,6 +168,15 @@ public class DocumentServiceImpl implements DocumentService {
     public void deleteDocument(String id) {
         Documents document = findById(id);
         documentRepository.delete(document);
+        
+        // Track document deletion
+        trackingService.track(TrackingRequest.builder()
+            .actor(securityUtils.getCurrentUser()) // You'll need to implement this
+            .entityType(TrackingEntityType.DOCUMENT)
+            .entityId(id)
+            .action(TrackingActionType.DELETE)
+            .metadata(Map.of("documentNumber", document.getNumber()))
+            .build());
     }
 
     @Override
