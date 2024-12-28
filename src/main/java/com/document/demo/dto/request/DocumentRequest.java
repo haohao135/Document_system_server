@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Getter
 @Setter
+@Builder
 public class DocumentRequest {
     @NotBlank(message = "Number is required")
     private String number;
