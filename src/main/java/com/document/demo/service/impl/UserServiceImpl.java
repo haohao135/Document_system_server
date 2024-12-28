@@ -1,6 +1,7 @@
 package com.document.demo.service.impl;
 
 import com.document.demo.dto.request.ChangePasswordRequest;
+import com.document.demo.dto.request.TrackingRequest;
 import com.document.demo.dto.request.UpdateProfileRequest;
 import com.document.demo.dto.request.UserRegistrationRequest;
 import com.document.demo.exception.InvalidPasswordException;
@@ -8,12 +9,17 @@ import com.document.demo.exception.ResourceAlreadyExistsException;
 import com.document.demo.exception.ResourceNotFoundException;
 import com.document.demo.models.Department;
 import com.document.demo.models.User;
+import com.document.demo.models.enums.TrackingActionType;
+import com.document.demo.models.enums.TrackingEntityType;
 import com.document.demo.models.enums.UserRole;
 import com.document.demo.models.enums.UserStatus;
+import com.document.demo.models.tracking.ChangeLog;
 import com.document.demo.repository.UserRepository;
 import com.document.demo.service.CloudinaryService;
 import com.document.demo.service.DepartmentService;
+import com.document.demo.service.TrackingService;
 import com.document.demo.service.UserService;
+import com.document.demo.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
@@ -24,40 +30,80 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+
+import static com.document.demo.utils.UpdateFieldUtils.updateField;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
-
+    private final TrackingService trackingService;
+    private final SecurityUtils securityUtils;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final CloudinaryService cloudinaryService;
     private final DepartmentService departmentService;
 
     @Override
-    public User registerUser(UserRegistrationRequest request) {
-        if (existsByUsername(request.getUsername())) {
+    @Transactional
+    public User registerUser(UserRegistrationRequest user) {
+        if (userRepository.existsByUsername(user.getUsername())) {
             throw new ResourceAlreadyExistsException("Username already exists");
         }
-        if (existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(user.getEmail())) {
             throw new ResourceAlreadyExistsException("Email already exists");
         }
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new InvalidPasswordException("Password and confirm password do not match");
-        }
 
-        User user = User.builder()
-                .username(request.getUsername())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .email(request.getEmail())
-                .fullName(request.getUsername())
-                .role(UserRole.USER)
-                .status(UserStatus.INACTIVE)
-                .build();
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        return userRepository.save(user);
+        User newUser = User.builder()
+            .username(user.getUsername())
+            .password(user.getPassword())
+            .email(user.getEmail())
+            .fullName(user.getUsername())
+            .status(UserStatus.INACTIVE)
+            .build();
+
+        User savedUser = userRepository.save(newUser);
+        
+        // Track user creation
+        trackingService.track(TrackingRequest.builder()
+            .actor(securityUtils.getCurrentUser())
+            .entityType(TrackingEntityType.USER)
+            .entityId(savedUser.getUserId())
+            .action(TrackingActionType.CREATE)
+            .metadata(Map.of(
+                "username", savedUser.getUsername(),
+                "email", savedUser.getEmail(),
+                "role", savedUser.getRole().toString()
+            ))
+            .build());
+            
+        return savedUser;
+    }
+
+    @Override
+    @Transactional
+    public void deleteUser(String id) {
+        User user = getUserById(id);
+        
+        // Track user deletion
+        trackingService.track(TrackingRequest.builder()
+            .actor(securityUtils.getCurrentUser())
+            .entityType(TrackingEntityType.USER)
+            .entityId(id)
+            .action(TrackingActionType.DELETE)
+            .metadata(Map.of(
+                "username", user.getUsername(),
+                "email", user.getEmail()
+            ))
+            .build());
+            
+        userRepository.delete(user);
     }
 
     @Override
@@ -97,6 +143,17 @@ public class UserServiceImpl implements UserService{
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+        Map<String, ChangeLog> changes = new HashMap<>();
+        changes.put("password", new ChangeLog());
+        trackingService.track(TrackingRequest.builder()
+            .actor(securityUtils.getCurrentUser())
+            .entityType(TrackingEntityType.USER)
+            .entityId(userId)
+            .action(TrackingActionType.UPDATE)
+            .changes(changes)
+            .build());
+
         userRepository.save(user);
     }
 
@@ -105,33 +162,89 @@ public class UserServiceImpl implements UserService{
     public void updateProfile(String userId, UpdateProfileRequest request) throws FileUploadException {
         User user = getUserById(userId);
 
-        if (request.getFullName() != null) {
-            user.setFullName(request.getFullName());
-        }
-        if (request.getPosition() != null) {
-            user.setPosition(request.getPosition());
-        }
-        if (request.getPhone() != null) {
-            user.setPhone(request.getPhone());
-        }
-        if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
-            String avatarUrl = cloudinaryService.uploadFile(request.getAvatarFile());
-            user.setAvatar(avatarUrl);
+        Map<String, ChangeLog> changes = new HashMap<>();
+        updateField(changes, "username", user.getUsername(), request.getUserName(), user::setUsername);
+        updateField(changes, "fullName", user.getFullName(), request.getFullName(), user::setFullName);
+        updateField(changes, "email", user.getEmail(), request.getEmail(), user::setEmail);
+        updateField(changes, "phone", user.getPhone(), request.getPhone(), user::setPhone);
+        updateField(changes, "position", user.getPosition(), request.getPosition(), user::setPosition);
+
+        // TODO: Remember uploaded file to Cloudinary before update user (avatar, background) and attachment in document
+        if(request.getAvatar() != null && !request.getAvatar().isEmpty()) {
+            changes.put("avatar", new ChangeLog());
+            handleImageUpdate(request, user.getAvatar(), user::setAvatar);
         }
         if (request.getBackground() != null && !request.getBackground().isEmpty()) {
-            String backgroundUrl = cloudinaryService.uploadFile(request.getBackgroundFile());
-            user.setBackground(backgroundUrl);
+            changes.put("background", new ChangeLog());
+            handleImageUpdate(request, user.getBackground(), user::setBackground);
         }
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // Track user update
+        trackingService.track(TrackingRequest.builder()
+            .actor(securityUtils.getCurrentUser())
+            .entityType(TrackingEntityType.USER)
+            .entityId(userId)
+            .action(TrackingActionType.UPDATE)
+            .changes(changes)
+            .metadata(Map.of("idUser", savedUser.getUserId()))
+            .build());
+    }
+
+    private void handleImageUpdate(UpdateProfileRequest request, String getImageUrl, Consumer<String> setter) throws FileUploadException {
+        // Delete existing image (it cannot delete if you want to restore it)
+        if (getImageUrl != null) {
+            String publicId = getImageUrl.substring(
+                getImageUrl.lastIndexOf("/") + 1,
+                getImageUrl.lastIndexOf(".")
+            );
+            cloudinaryService.deleteFile(publicId);
+        }
+
+        String imageUrl = cloudinaryService.uploadFile(request.getAvatarFile());
+        setter.accept(imageUrl);
     }
 
     @Override
     @Transactional
     public void updateStatus(String userId, UserStatus status) {
         User user = getUserById(userId);
-        user.setStatus(status);
-        userRepository.save(user);
+        Map<String, ChangeLog> changes = new HashMap<>();
+        updateField(changes, "status", user.getStatus(), status, user::setStatus);
+
+        User savedUser = userRepository.save(user);
+
+        // Track user status update
+        trackingService.track(TrackingRequest.builder()
+            .actor(securityUtils.getCurrentUser())
+            .entityType(TrackingEntityType.USER)
+            .entityId(userId)
+            .action(TrackingActionType.UPDATE)
+            .changes(changes)
+            .metadata(Map.of("idUser", savedUser.getUserId()))
+            .build());
+    }
+
+    @Override
+    @Transactional
+    public void updateRole(String userId, UserRole role) {
+        User user = getUserById(userId);
+
+        Map<String, ChangeLog> changes = new HashMap<>();
+        updateField(changes, "role", user.getRole(), role, user::setRole);
+
+        User savedUser = userRepository.save(user);
+
+        // Track user role update
+        trackingService.track(TrackingRequest.builder()
+            .actor(securityUtils.getCurrentUser())
+            .entityType(TrackingEntityType.USER)
+            .entityId(userId)
+            .action(TrackingActionType.UPDATE)
+            .changes(changes)
+            .metadata(Map.of("idUser", savedUser.getUserId()))
+            .build());
     }
 
     @Override

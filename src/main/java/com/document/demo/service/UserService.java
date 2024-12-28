@@ -13,6 +13,8 @@ import java.util.List;
 
 public interface UserService extends UserDetailsService {
     User registerUser(UserRegistrationRequest request);
+    void deleteUser(String userId);
+
     User findByUsername(String username);
     User findByEmail(String email);
     List<User> findByDepartment(String departmentId);
@@ -20,6 +22,7 @@ public interface UserService extends UserDetailsService {
     void changePassword(String userId, ChangePasswordRequest request);
     void updateProfile(String userId, UpdateProfileRequest request) throws FileUploadException;
     void updateStatus(String userId, UserStatus status);
+    void updateRole(String userId, UserRole role);
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
 

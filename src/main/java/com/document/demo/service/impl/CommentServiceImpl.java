@@ -8,6 +8,7 @@ import com.document.demo.models.User;
 import com.document.demo.models.enums.CommentStatus;
 import com.document.demo.models.enums.TrackingActionType;
 import com.document.demo.models.enums.TrackingEntityType;
+import com.document.demo.models.tracking.ChangeLog;
 import com.document.demo.repository.CommentRepository;
 import com.document.demo.service.CommentService;
 import com.document.demo.service.TrackingService;
@@ -17,8 +18,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.document.demo.utils.UpdateFieldUtils.updateField;
 
 @Service
 @Slf4j
@@ -54,18 +58,18 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     public Comment updateComment(String id, Comment comment) {
         Comment existingComment = findById(id);
-        
-        if (comment.getComment() != null) {
-            existingComment.setComment(comment.getComment());
-        }
-        existingComment.setTimestamp(LocalDateTime.now());
-        existingComment.setStatus(CommentStatus.EDITED);
+
+        Map<String, ChangeLog> changes = new HashMap<>();
+        updateField(changes, "comment", existingComment.getComment(), comment.getComment(), existingComment::setComment);
+        updateField(changes, "status", existingComment.getStatus(), CommentStatus.EDITED, existingComment::setStatus);
+        updateField(changes, "timestamp", existingComment.getTimestamp(), LocalDateTime.now(), existingComment::setTimestamp);
 
         trackingService.track(TrackingRequest.builder()
             .actor(existingComment.getUser())
             .entityType(TrackingEntityType.COMMENT)
             .entityId(existingComment.getCommentId())
             .action(TrackingActionType.UPDATE)
+            .changes(changes)
             .metadata(Map.of(
                 "distributionId", existingComment.getDistribution().getDistributionId(),
                 "content", existingComment.getComment()

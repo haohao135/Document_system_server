@@ -9,8 +9,10 @@ import org.springframework.web.multipart.MultipartFile;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateProfileRequest {
+    private String userName;
     private String fullName;
     private String position;
+    private String email;
     private String phone;
     private String avatar;
     private String background;

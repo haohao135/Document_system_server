@@ -1,23 +1,35 @@
 package com.document.demo.service.impl;
 
+import com.document.demo.dto.request.TrackingRequest;
 import com.document.demo.exception.ResourceAlreadyExistsException;
 import com.document.demo.exception.ResourceNotFoundException;
 import com.document.demo.models.Folder;
 import com.document.demo.models.User;
+import com.document.demo.models.enums.TrackingActionType;
+import com.document.demo.models.enums.TrackingEntityType;
+import com.document.demo.models.tracking.ChangeLog;
 import com.document.demo.repository.FolderRepository;
 import com.document.demo.service.FolderService;
+import com.document.demo.service.TrackingService;
+import com.document.demo.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+
+import static com.document.demo.utils.UpdateFieldUtils.updateField;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class FolderServiceImpl implements FolderService {
     private final FolderRepository folderRepository;
+    private final TrackingService trackingService;
+    private final SecurityUtils securityUtils;
 
     @Override
     @Transactional
@@ -26,7 +38,21 @@ public class FolderServiceImpl implements FolderService {
             throw new ResourceAlreadyExistsException("Folder with this name already exists");
         }
 
-        return folderRepository.save(folder);
+        Folder savedFolder = folderRepository.save(folder);
+        
+        // Track folder creation
+        trackingService.track(TrackingRequest.builder()
+            .actor(securityUtils.getCurrentUser())
+            .entityType(TrackingEntityType.FOLDER)
+            .entityId(savedFolder.getFolderId())
+            .action(TrackingActionType.CREATE)
+            .metadata(Map.of(
+                "name", savedFolder.getName(),
+                "createdBy", savedFolder.getCreatedBy().getUsername()
+            ))
+            .build());
+
+        return savedFolder;
     }
 
     @Override
@@ -40,17 +66,40 @@ public class FolderServiceImpl implements FolderService {
             throw new ResourceAlreadyExistsException("Folder with this name already exists");
         }
 
-        if (folder.getName() != null) {
-            existingFolder.setName(folder.getName());
-        }
+        Map<String, ChangeLog> changes = new HashMap<>();
+        updateField(changes, "name", existingFolder.getName(), folder.getName(), existingFolder::setName);
 
-        return folderRepository.save(existingFolder);
+        Folder updatedFolder = folderRepository.save(existingFolder);
+        
+        // Track folder update
+        trackingService.track(TrackingRequest.builder()
+            .actor(securityUtils.getCurrentUser())
+            .entityType(TrackingEntityType.FOLDER)
+            .entityId(id)
+            .action(TrackingActionType.UPDATE)
+            .changes(changes)
+            .build());
+
+        return updatedFolder;
     }
 
     @Override
     @Transactional
     public void deleteFolder(String id) {
         Folder folder = findById(id);
+        
+        // Track folder deletion
+        trackingService.track(TrackingRequest.builder()
+            .actor(securityUtils.getCurrentUser())
+            .entityType(TrackingEntityType.FOLDER)
+            .entityId(id)
+            .action(TrackingActionType.DELETE)
+            .metadata(Map.of(
+                "name", folder.getName(),
+                "createdBy", folder.getCreatedBy().getUsername()
+            ))
+            .build());
+            
         folderRepository.delete(folder);
     }
 
