@@ -10,7 +10,6 @@ import com.document.demo.models.tracking.ChangeLog;
 import com.document.demo.repository.DepartmentRepository;
 import com.document.demo.service.DepartmentService;
 import com.document.demo.service.TrackingService;
-import com.document.demo.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,7 +27,7 @@ import static com.document.demo.utils.UpdateFieldUtils.updateField;
 public class DepartmentServiceImpl implements DepartmentService {
     private final DepartmentRepository departmentRepository;
     private final TrackingService trackingService;
-    private final SecurityUtils securityUtils;
+    private final UserServiceImpl userServiceImpl;
 
     @Override
     @Transactional
@@ -41,7 +40,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         
         // Track department creation
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(userServiceImpl.getCurrentUser())
             .entityType(TrackingEntityType.DEPARTMENT)
             .entityId(savedDepartment.getDepartmentId())
             .action(TrackingActionType.CREATE)
@@ -73,7 +72,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         
         // Track department update
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(userServiceImpl.getCurrentUser())
             .entityType(TrackingEntityType.DEPARTMENT)
             .entityId(id)
             .action(TrackingActionType.UPDATE)
@@ -90,7 +89,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         
         // Track department deletion
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(userServiceImpl.getCurrentUser())
             .entityType(TrackingEntityType.DEPARTMENT)
             .entityId(id)
             .action(TrackingActionType.DELETE)

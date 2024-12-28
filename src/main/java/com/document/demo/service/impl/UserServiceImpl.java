@@ -14,15 +14,16 @@ import com.document.demo.models.enums.TrackingEntityType;
 import com.document.demo.models.enums.UserRole;
 import com.document.demo.models.enums.UserStatus;
 import com.document.demo.models.tracking.ChangeLog;
+import com.document.demo.repository.DepartmentRepository;
 import com.document.demo.repository.UserRepository;
 import com.document.demo.service.CloudinaryService;
-import com.document.demo.service.DepartmentService;
 import com.document.demo.service.TrackingService;
 import com.document.demo.service.UserService;
-import com.document.demo.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -43,10 +44,9 @@ import static com.document.demo.utils.UpdateFieldUtils.updateField;
 public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
     private final TrackingService trackingService;
-    private final SecurityUtils securityUtils;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final CloudinaryService cloudinaryService;
-    private final DepartmentService departmentService;
+    private final DepartmentRepository departmentRepository;
 
     @Override
     @Transactional
@@ -72,7 +72,7 @@ public class UserServiceImpl implements UserService{
         
         // Track user creation
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(getCurrentUser())
             .entityType(TrackingEntityType.USER)
             .entityId(savedUser.getUserId())
             .action(TrackingActionType.CREATE)
@@ -93,7 +93,7 @@ public class UserServiceImpl implements UserService{
         
         // Track user deletion
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(getCurrentUser())
             .entityType(TrackingEntityType.USER)
             .entityId(id)
             .action(TrackingActionType.DELETE)
@@ -120,7 +120,8 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public List<User> findByDepartment(String departmentId) {
-        Department department = departmentService.findById(departmentId);
+        Department department = departmentRepository.findById(departmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + departmentId));
         return userRepository.findByDepartment(department);
     }
 
@@ -147,7 +148,7 @@ public class UserServiceImpl implements UserService{
         Map<String, ChangeLog> changes = new HashMap<>();
         changes.put("password", new ChangeLog());
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(getCurrentUser())
             .entityType(TrackingEntityType.USER)
             .entityId(userId)
             .action(TrackingActionType.UPDATE)
@@ -183,7 +184,7 @@ public class UserServiceImpl implements UserService{
 
         // Track user update
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(getCurrentUser())
             .entityType(TrackingEntityType.USER)
             .entityId(userId)
             .action(TrackingActionType.UPDATE)
@@ -217,7 +218,7 @@ public class UserServiceImpl implements UserService{
 
         // Track user status update
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(getCurrentUser())
             .entityType(TrackingEntityType.USER)
             .entityId(userId)
             .action(TrackingActionType.UPDATE)
@@ -238,7 +239,7 @@ public class UserServiceImpl implements UserService{
 
         // Track user role update
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(getCurrentUser())
             .entityType(TrackingEntityType.USER)
             .entityId(userId)
             .action(TrackingActionType.UPDATE)
@@ -266,5 +267,15 @@ public class UserServiceImpl implements UserService{
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+    }
+
+    public User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        String username = authentication.getName();
+        return findByUsername(username);
     }
 }

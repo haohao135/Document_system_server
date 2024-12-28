@@ -11,7 +11,6 @@ import com.document.demo.models.tracking.ChangeLog;
 import com.document.demo.repository.FolderRepository;
 import com.document.demo.service.FolderService;
 import com.document.demo.service.TrackingService;
-import com.document.demo.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,7 +28,7 @@ import static com.document.demo.utils.UpdateFieldUtils.updateField;
 public class FolderServiceImpl implements FolderService {
     private final FolderRepository folderRepository;
     private final TrackingService trackingService;
-    private final SecurityUtils securityUtils;
+    private final UserServiceImpl userService;
 
     @Override
     @Transactional
@@ -42,7 +41,7 @@ public class FolderServiceImpl implements FolderService {
         
         // Track folder creation
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(userService.getCurrentUser())
             .entityType(TrackingEntityType.FOLDER)
             .entityId(savedFolder.getFolderId())
             .action(TrackingActionType.CREATE)
@@ -73,7 +72,7 @@ public class FolderServiceImpl implements FolderService {
         
         // Track folder update
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(userService.getCurrentUser())
             .entityType(TrackingEntityType.FOLDER)
             .entityId(id)
             .action(TrackingActionType.UPDATE)
@@ -90,7 +89,7 @@ public class FolderServiceImpl implements FolderService {
         
         // Track folder deletion
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(userService.getCurrentUser())
             .entityType(TrackingEntityType.FOLDER)
             .entityId(id)
             .action(TrackingActionType.DELETE)

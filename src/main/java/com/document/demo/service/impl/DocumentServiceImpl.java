@@ -17,7 +17,6 @@ import com.document.demo.service.CloudinaryService;
 import com.document.demo.service.DocumentService;
 import com.document.demo.service.TrackingService;
 import com.document.demo.service.UserService;
-import com.document.demo.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
@@ -39,7 +38,7 @@ public class DocumentServiceImpl implements DocumentService {
     private final UserService userService;
     private final CloudinaryService cloudinaryService;
     private final TrackingService trackingService;
-    private final SecurityUtils securityUtils;
+    private final UserServiceImpl userServiceImpl;
 
     @Override
     @Transactional
@@ -75,7 +74,7 @@ public class DocumentServiceImpl implements DocumentService {
 
         // Track document creation
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(userServiceImpl.getCurrentUser())
             .entityType(TrackingEntityType.DOCUMENT)
             .entityId(savedDocument.getDocumentId())
             .action(TrackingActionType.CREATE)
@@ -128,7 +127,7 @@ public class DocumentServiceImpl implements DocumentService {
         
         // Track document update
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(userServiceImpl.getCurrentUser())
             .entityType(TrackingEntityType.DOCUMENT)
             .entityId(id)
             .action(TrackingActionType.UPDATE)
@@ -160,7 +159,7 @@ public class DocumentServiceImpl implements DocumentService {
         
         // Track document deletion
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(userServiceImpl.getCurrentUser())
             .entityType(TrackingEntityType.DOCUMENT)
             .entityId(id)
             .action(TrackingActionType.DELETE)

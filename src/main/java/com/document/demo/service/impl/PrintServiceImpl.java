@@ -9,7 +9,6 @@ import com.document.demo.service.DocumentService;
 import com.document.demo.service.PrintService;
 import com.document.demo.service.TrackingService;
 import com.document.demo.service.CloudinaryService;
-import com.document.demo.utils.SecurityUtils;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -37,7 +36,7 @@ import java.util.stream.Collectors;
 public class PrintServiceImpl implements PrintService {
     private final DocumentService documentService;
     private final TrackingService trackingService;
-    private final SecurityUtils securityUtils;
+    private final UserServiceImpl userService;
     private final CloudinaryService cloudinaryService;
 
     @Override
@@ -104,7 +103,7 @@ public class PrintServiceImpl implements PrintService {
 
     private void trackDocumentOperation(Documents document, String format, TrackingActionType action) {
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(userService.getCurrentUser())
             .entityType(TrackingEntityType.DOCUMENT)
             .entityId(document.getDocumentId())
             .action(action)
@@ -118,7 +117,7 @@ public class PrintServiceImpl implements PrintService {
 
     private void trackBatchExport(int documentCount) {
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(userService.getCurrentUser())
             .entityType(TrackingEntityType.DOCUMENT)
             .entityId("batch-export")
             .action(TrackingActionType.EXPORT)
@@ -196,7 +195,7 @@ public class PrintServiceImpl implements PrintService {
             DocPrintJob job = printService.createPrintJob();
             job.print(doc, attrs);
             
-            savePrintHistory(documentId, securityUtils.getCurrentUser().getUserId(), printerName);
+            savePrintHistory(documentId, userService.getCurrentUser().getUserId(), printerName);
         } catch (PrintException e) {
             throw new PrintException("Failed to print document", e);
         } catch (javax.print.PrintException e) {
@@ -215,7 +214,7 @@ public class PrintServiceImpl implements PrintService {
     @Transactional
     public void savePrintHistory(String documentId, String userId, String printerName) {
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(userService.getCurrentUser())
             .entityType(TrackingEntityType.DOCUMENT)
             .entityId(documentId)
             .action(TrackingActionType.PRINT)

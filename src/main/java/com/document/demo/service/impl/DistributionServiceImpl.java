@@ -12,7 +12,6 @@ import com.document.demo.models.tracking.ChangeLog;
 import com.document.demo.repository.DistributionRepository;
 import com.document.demo.service.DistributionService;
 import com.document.demo.service.TrackingService;
-import com.document.demo.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,7 +30,7 @@ import static com.document.demo.utils.UpdateFieldUtils.updateField;
 public class DistributionServiceImpl implements DistributionService {
     private final DistributionRepository distributionRepository;
     private final TrackingService trackingService;
-    private final SecurityUtils securityUtils;
+    private final UserServiceImpl userServiceImpl;
 
     @Override
     @Transactional
@@ -45,7 +44,7 @@ public class DistributionServiceImpl implements DistributionService {
         
         // Track distribution creation
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(userServiceImpl.getCurrentUser())
             .entityType(TrackingEntityType.DISTRIBUTION)
             .entityId(savedDistribution.getDistributionId())
             .action(TrackingActionType.CREATE)
@@ -76,7 +75,7 @@ public class DistributionServiceImpl implements DistributionService {
         
         // Track distribution update
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(userServiceImpl.getCurrentUser())
             .entityType(TrackingEntityType.DISTRIBUTION)
             .entityId(id)
             .action(TrackingActionType.UPDATE)
@@ -93,7 +92,7 @@ public class DistributionServiceImpl implements DistributionService {
         
         // Track distribution deletion
         trackingService.track(TrackingRequest.builder()
-            .actor(securityUtils.getCurrentUser())
+            .actor(userServiceImpl.getCurrentUser())
             .entityType(TrackingEntityType.DISTRIBUTION)
             .entityId(id)
             .action(TrackingActionType.DELETE)

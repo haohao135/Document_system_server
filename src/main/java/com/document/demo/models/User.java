@@ -85,6 +85,9 @@ public class User implements UserDetails {
     @DBRef
     private List<Distribution> receivedDistributions = new ArrayList<>();
 
+    @DBRef
+    private List<Tracking> trackings = new ArrayList<>();
+
     // UserDetails implementation
     @Override
     @JsonIgnore
