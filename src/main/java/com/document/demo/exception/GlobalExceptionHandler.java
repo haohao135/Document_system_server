@@ -78,4 +78,16 @@ public class GlobalExceptionHandler {
         log.error("Invalid password: {}", ex.getMessage());
         return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(PrintException.class)
+    public ResponseEntity<?> handlePrintException(PrintException ex) {
+        log.error("Print error: {}", ex.getMessage());
+        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(FileDownloadException.class)
+    public ResponseEntity<?> handleFileDownloadException(FileDownloadException ex) {
+        log.error("File download error: {}", ex.getMessage());
+        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 } 

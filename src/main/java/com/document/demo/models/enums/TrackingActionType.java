@@ -20,6 +20,7 @@ public enum TrackingActionType {
     SHARE("Shared"),
     DOWNLOAD("Downloaded"),
     PRINT("Printed"),
+    EXPORT("Exported"),
     STATUS_CHANGE("Changed status"),
     
     // System
