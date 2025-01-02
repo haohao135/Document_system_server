@@ -1,11 +1,12 @@
 package com.document.demo.service.impl;
 
+import com.document.demo.service.OtpService;
 import org.springframework.stereotype.Service;
 
 import java.util.Random;
 
 @Service
-public class OtpServiceImpl {
+public class OtpServiceImpl implements OtpService {
     public String generateNumberOtp(int length) {
         Random random = new Random();
         StringBuilder otp = new StringBuilder(length);

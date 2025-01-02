@@ -1,5 +1,6 @@
 package com.document.demo.service.impl;
 
+import com.document.demo.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.AllArgsConstructor;
@@ -13,7 +14,7 @@ import java.io.UnsupportedEncodingException;
 
 @Service
 @AllArgsConstructor
-public class EmailServiceImpl {
+public class EmailServiceImpl implements EmailService {
     private final JavaMailSender javaMailSender;
 
     public ResponseEntity<?> sendEmail(String to, String subject, String content, String nameOfSystem) {

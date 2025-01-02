@@ -1,5 +1,6 @@
 package com.document.demo.service.impl;
 
+import com.document.demo.service.OtpStorageService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -8,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @AllArgsConstructor
-public class OtpStorageServiceImpl {
+public class OtpStorageServiceImpl implements OtpStorageService {
     private final StringRedisTemplate redisTemplate;
 
     // maybe use email for key and otp for value
