@@ -28,4 +28,5 @@ public interface UserService extends UserDetailsService {
 
     User getUserById(String id);
 
+    User getCurrentUser();
 }

@@ -11,6 +11,7 @@ import com.document.demo.models.tracking.ChangeLog;
 import com.document.demo.repository.CheckMarkRepository;
 import com.document.demo.service.CheckMarkService;
 import com.document.demo.service.TrackingService;
+import com.document.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ import static com.document.demo.utils.UpdateFieldUtils.updateField;
 public class CheckMarkServiceImpl implements CheckMarkService {
     private final CheckMarkRepository checkMarkRepository;
     private final TrackingService trackingService;
-    private final UserServiceImpl userService;
+    private final UserService userService;
 
     @Override
     @Transactional

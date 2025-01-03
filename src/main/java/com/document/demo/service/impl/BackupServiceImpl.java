@@ -59,6 +59,7 @@ public class BackupServiceImpl implements BackupService {
         // Write to file
         objectMapper.writeValue(backupFile.toFile(), backup);
 
+
         return new UrlResource(backupFile.toUri());
     }
 

@@ -16,12 +16,15 @@ public enum TrackingActionType {
     LOGOUT("Logged out"),
     PASSWORD_CHANGE("Changed password"),
     PROFILE_UPDATE("Updated profile"),
+
+    // Backup
+    IMPORT("Imported"),
+    EXPORT("Exported"),
     
     // Document specific
     SHARE("Shared"),
     DOWNLOAD("Downloaded"),
     PRINT("Printed"),
-    EXPORT("Exported"),
     STATUS_CHANGE("Changed status"),
     
     // System

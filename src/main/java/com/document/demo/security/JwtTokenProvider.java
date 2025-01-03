@@ -58,7 +58,7 @@ public class JwtTokenProvider {
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(key)  // Sử dụng key đã tạo
+                .signWith(key)
                 .compact();
     }
 
@@ -83,7 +83,7 @@ public class JwtTokenProvider {
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(key)  // Sử dụng key đã tạo
+                .signWith(key)
                 .compact();
     }
 
