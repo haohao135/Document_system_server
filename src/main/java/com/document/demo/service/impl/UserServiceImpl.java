@@ -153,7 +153,7 @@ public class UserServiceImpl implements UserService{
             .actor(isForgot? user : getCurrentUser())
             .entityType(TrackingEntityType.USER)
             .entityId(userId)
-            .action(TrackingActionType.UPDATE)
+            .action(TrackingActionType.PASSWORD_CHANGE)
             .changes(changes)
             .build());
 

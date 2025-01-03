@@ -13,6 +13,7 @@ public enum TrackingActionType {
     // User specific
     LOGIN("Logged in"),
     SEND_OTP("Sent OTP"),
+    VERIFY_OTP("Verified OTP"),
     LOGOUT("Logged out"),
     PASSWORD_CHANGE("Changed password"),
     PROFILE_UPDATE("Updated profile"),

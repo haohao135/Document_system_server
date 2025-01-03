@@ -6,6 +6,7 @@ import com.document.demo.dto.response.ErrorResponse;
 import com.document.demo.dto.response.JwtResponse;
 import com.document.demo.dto.response.SuccessResponse;
 import com.document.demo.exception.ResourceAlreadyExistsException;
+import com.document.demo.exception.ResourceNotFoundException;
 import com.document.demo.models.User;
 import com.document.demo.models.enums.TrackingActionType;
 import com.document.demo.models.enums.TrackingEntityType;
@@ -148,15 +149,11 @@ public class AuthController {
     public ResponseEntity<?> sendOtpEmail(@Valid @RequestBody EmailRequest request) {
         try {
             User user = userService.findByEmail(request.getTo());
-            if (user == null) {
-                return ResponseEntity
-                        .status(HttpStatus.BAD_REQUEST)
-                        .body(new ErrorResponse("Invalid email"));
-            }
+            
             if(user.getStatus().equals(UserStatus.INACTIVE)){
                 return ResponseEntity
-                        .status(HttpStatus.BAD_REQUEST)
-                        .body(new ErrorResponse("Account is inactive"));
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse("Account is inactive"));
             }
             
             // Generate OTP
@@ -176,8 +173,21 @@ public class AuthController {
                     .body(new ErrorResponse(emailResponse.getMessage()));
             }
 
+            trackingService.track(
+                TrackingRequest.builder()
+                    .actor(user)
+                    .entityType(TrackingEntityType.USER)
+                    .entityId(user.getUserId())
+                    .action(TrackingActionType.SEND_OTP)
+                    .build()
+            );
+
             return ResponseEntity.ok(new SuccessResponse("OTP sent successfully", emailResponse));
             
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("Email is not registered"));
         } catch (Exception e) {
             log.error("Error sending OTP: ", e);
             return ResponseEntity
@@ -210,6 +220,15 @@ public class AuthController {
 
             // Delete OTP after verify
             otpService.deleteOtp(request.getEmail());
+
+            trackingService.track(
+                TrackingRequest.builder()
+                    .actor(user)
+                    .entityType(TrackingEntityType.USER)
+                    .entityId(user.getUserId())
+                    .action(TrackingActionType.VERIFY_OTP)
+                    .build()
+            );
 
             return ResponseEntity.ok(new SuccessResponse("OTP verified successfully", Map.of("resetToken", resetPasswordToken)));
             
