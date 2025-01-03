@@ -90,13 +90,13 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public List<Notification> findByUser(String userId) {
         User user = userService.getUserById(userId);
-        return notificationRepository.findByUser(user);
+        return notificationRepository.findByUserOrderByTimestampDesc(user);
     }
 
     @Override
     public List<Notification> findUnreadByUser(String userId) {
         User user = userService.getUserById(userId);
-        return notificationRepository.findByUserAndRead(user, false);
+        return notificationRepository.findByUserAndReadOrderByTimestampDesc(user, false);
     }
 
     @Override

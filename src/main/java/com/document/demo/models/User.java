@@ -42,10 +42,10 @@ public class User implements UserDetails {
     private String password;
 
     @Builder.Default
-    private String avatar = "default-avatar.png";
+    private String avatar = "https://res.cloudinary.com/dysmw04kc/image/upload/v1702052066/samples/balloons.jpg";
 
     @Builder.Default
-    private String background = "default-background.jpg";
+    private String background = "https://res.cloudinary.com/dysmw04kc/image/upload/v1735927635/samples/landscapes/background.jpg";
 
     @NotBlank(message = "Full name is required")
     private String fullName;

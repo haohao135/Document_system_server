@@ -16,4 +16,6 @@ public interface NotificationRepository extends MongoRepository<Notification, St
     List<Notification> findByDocument(Documents document);
     List<Notification> findByTimestampBetween(LocalDateTime start, LocalDateTime end);
     long countByUserAndRead(User user, boolean isRead);
+    List<Notification> findByUserOrderByTimestampDesc(User user);
+    List<Notification> findByUserAndReadOrderByTimestampDesc(User user, boolean isRead);
 } 

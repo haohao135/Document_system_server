@@ -22,6 +22,9 @@ import com.document.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -64,7 +67,7 @@ public class UserServiceImpl implements UserService{
             .username(user.getUsername())
             .password(user.getPassword())
             .email(user.getEmail())
-            .fullName(user.getUsername())
+            .fullName(user.getFullName())
             .status(UserStatus.INACTIVE)
             .build();
 
@@ -280,5 +283,28 @@ public class UserServiceImpl implements UserService{
 
         String username = authentication.getName();
         return findByUsername(username);
+    }
+
+    @Override
+    public Page<User> findAll(int page, int size, String search, UserRole role, UserStatus status) {
+        Pageable pageable = PageRequest.of(page, size);
+        
+        if (search != null && !search.isEmpty()) {
+            return userRepository.searchUsers(search, pageable);
+        }
+        
+        if (role != null && status != null) {
+            return userRepository.findByRoleAndStatus(role, status, pageable);
+        }
+        
+        if (role != null) {
+            return userRepository.findByRole(role, pageable);
+        }
+        
+        if (status != null) {
+            return userRepository.findByStatus(status, pageable);
+        }
+        
+        return userRepository.findAll(pageable);
     }
 }

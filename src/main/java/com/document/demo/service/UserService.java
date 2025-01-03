@@ -7,6 +7,7 @@ import com.document.demo.models.enums.UserStatus;
 import com.document.demo.dto.request.ChangePasswordRequest;
 import com.document.demo.dto.request.UpdateProfileRequest;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.util.List;
@@ -29,4 +30,6 @@ public interface UserService extends UserDetailsService {
     User getUserById(String id);
 
     User getCurrentUser();
+
+    Page<User> findAll(int page, int size, String search, UserRole role, UserStatus status);
 }

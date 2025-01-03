@@ -24,7 +24,7 @@ public class Notification {
     private LocalDateTime timestamp = LocalDateTime.now();
 
     @Builder.Default
-    private boolean isRead = false;
+    private boolean read = false;
 
     @DBRef
     private User user;
