@@ -2,7 +2,6 @@ package com.document.demo.dto.request;
 
 import lombok.*;
 
-import java.util.Map;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -11,6 +10,4 @@ import java.util.Map;
 @Builder
 public class EmailRequest {
     private String to;
-    private String subject;
-    private String nameOfSystem;
 }

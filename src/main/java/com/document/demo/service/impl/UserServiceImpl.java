@@ -72,7 +72,7 @@ public class UserServiceImpl implements UserService{
         
         // Track user creation
         trackingService.track(TrackingRequest.builder()
-            .actor(getCurrentUser())
+            .actor(savedUser)
             .entityType(TrackingEntityType.USER)
             .entityId(savedUser.getUserId())
             .action(TrackingActionType.CREATE)
@@ -132,11 +132,13 @@ public class UserServiceImpl implements UserService{
 
     @Override
     @Transactional
-    public void changePassword(String userId, ChangePasswordRequest request) {
+    public void changePassword(String userId, ChangePasswordRequest request, boolean isForgot) {
         User user = getUserById(userId);
-        
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new InvalidPasswordException("Current password is incorrect");
+
+        if(!isForgot){
+            if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+                throw new InvalidPasswordException("Current password is incorrect");
+            }
         }
         
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
@@ -148,7 +150,7 @@ public class UserServiceImpl implements UserService{
         Map<String, ChangeLog> changes = new HashMap<>();
         changes.put("password", new ChangeLog());
         trackingService.track(TrackingRequest.builder()
-            .actor(getCurrentUser())
+            .actor(isForgot? user : getCurrentUser())
             .entityType(TrackingEntityType.USER)
             .entityId(userId)
             .action(TrackingActionType.UPDATE)

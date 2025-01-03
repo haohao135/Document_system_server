@@ -19,7 +19,7 @@ public interface UserService extends UserDetailsService {
     User findByEmail(String email);
     List<User> findByDepartment(String departmentId);
     List<User> findByRole(UserRole role);
-    void changePassword(String userId, ChangePasswordRequest request);
+    void changePassword(String userId, ChangePasswordRequest request, boolean isForgot);
     void updateProfile(String userId, UpdateProfileRequest request) throws FileUploadException;
     void updateStatus(String userId, UserStatus status);
     void updateRole(String userId, UserRole role);
