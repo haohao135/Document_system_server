@@ -4,6 +4,7 @@ import com.document.demo.dto.request.EmailRequest;
 import com.document.demo.dto.request.LoginRequest;
 import com.document.demo.dto.request.RefreshTokenRequest;
 import com.document.demo.dto.request.UserRegistrationRequest;
+import com.document.demo.dto.response.EmailResponse;
 import com.document.demo.dto.response.ErrorResponse;
 import com.document.demo.dto.response.JwtResponse;
 import com.document.demo.dto.response.SuccessResponse;
@@ -11,10 +12,9 @@ import com.document.demo.exception.ResourceAlreadyExistsException;
 import com.document.demo.models.User;
 import com.document.demo.models.enums.UserStatus;
 import com.document.demo.security.JwtTokenProvider;
+import com.document.demo.service.EmailService;
+import com.document.demo.service.OtpService;
 import com.document.demo.service.UserService;
-import com.document.demo.service.impl.EmailServiceImpl;
-import com.document.demo.service.impl.OtpServiceImpl;
-import com.document.demo.service.impl.OtpStorageServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,9 +34,8 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
     private final UserService userService;
-    private final EmailServiceImpl emailService;
-    private final OtpServiceImpl otpService;
-    private final OtpStorageServiceImpl otpStorageService;
+    private final EmailService emailService;
+    private final OtpService otpService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
@@ -117,10 +116,7 @@ public class AuthController {
                 .body(new ErrorResponse("Could not refresh token"));
         }
     }
-//    @PostMapping("/forgotPassword")
-//    public ResponseEntity<?> forgotPasswordRequest(@RequestBody String request){
-//
-//    }
+
     @PostMapping("/send")
     public ResponseEntity<?> sendEmail(@RequestBody EmailRequest request) {
         User user = userService.findByEmail(request.getTo());
@@ -132,14 +128,27 @@ public class AuthController {
         if(user.getStatus().equals(UserStatus.INACTIVE)){
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("Account is in active"));
+                    .body(new ErrorResponse("Account is inactive"));
         }
-        String otp = otpService.generateNumberOtp(6);
-        otpStorageService.save(request.getTo(), otp);
+        
+        // Generate OTP
+        String otp = otpService.generateOtp(6, true);
+        // Save OTP to Redis
+        otpService.saveOtp(request.getTo(), otp);
 
-        return ResponseEntity.status(HttpStatus.OK).body(
-                new SuccessResponse("Send OTP successfully", emailService.sendEmail(request.getTo(),
-                        request.getSubject(), otp, request.getNameOfSystem())));
+        // Send email with OTP
+        EmailResponse emailResponse = emailService.sendOtpEmail(
+            request.getTo(),
+            otp
+        );
+
+        if (!emailResponse.isSuccess()) {
+            return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(emailResponse.getMessage()));
+        }
+
+        return ResponseEntity.ok(new SuccessResponse("OTP sent successfully", emailResponse));
     }
 
     @PostMapping("/logout")

@@ -1,7 +1,7 @@
 package com.document.demo.service;
 
-import org.springframework.http.ResponseEntity;
+import com.document.demo.dto.response.EmailResponse;
 
 public interface EmailService {
-    ResponseEntity<?> sendEmail(String to, String subject, String content, String nameOfSystem);
+    EmailResponse sendOtpEmail(String to, String otp);
 }
