@@ -3,6 +3,7 @@ package com.document.demo.models;
 import com.document.demo.models.enums.UserRole;
 import com.document.demo.models.enums.UserStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Email;
@@ -42,10 +43,10 @@ public class User implements UserDetails {
     private String password;
 
     @Builder.Default
-    private String avatar = "https://res.cloudinary.com/dysmw04kc/image/upload/v1702052066/samples/balloons.jpg";
+    private String avatar = "https://res.cloudinary.com/dysmw04kc/image/upload/v1735978837/document-system/avatar/balloons.jpg";
 
     @Builder.Default
-    private String background = "https://res.cloudinary.com/dysmw04kc/image/upload/v1735927635/samples/landscapes/background.jpg";
+    private String background = "https://res.cloudinary.com/dysmw04kc/image/upload/v1735978924/document-system/background/background.jpg";
 
     @NotBlank(message = "Full name is required")
     private String fullName;
@@ -74,18 +75,23 @@ public class User implements UserDetails {
     private List<Folder> folders = new ArrayList<>();
 
     @DBRef
+    @JsonIgnore
     private List<Documents> documents = new ArrayList<>();
 
+    @JsonIgnoreProperties({"users"})
     @DBRef
     private Department department;
 
     @DBRef
+    @JsonIgnore
     private List<Distribution> sentDistributions = new ArrayList<>();
 
     @DBRef
+    @JsonIgnore
     private List<Distribution> receivedDistributions = new ArrayList<>();
 
     @DBRef
+    @JsonIgnore
     private List<Tracking> trackings = new ArrayList<>();
 
     // UserDetails implementation

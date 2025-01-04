@@ -1,12 +1,14 @@
 package com.document.demo.models;
 
 import com.document.demo.models.enums.CommentStatus;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
 
@@ -30,8 +32,10 @@ public class Comment {
     private CommentStatus status = CommentStatus.ORIGINAL;
 
     @DBRef
+    @JsonIgnoreProperties({"password", "comments"})
     private User user;
 
     @DBRef
+    @JsonIgnore
     private Distribution distribution;
 }

@@ -2,8 +2,12 @@ package com.document.demo.service;
 
 import com.document.demo.dto.request.DocumentRequest;
 import com.document.demo.models.Documents;
+import com.document.demo.models.enums.DocumentStatus;
+import com.document.demo.models.enums.DocumentType;
 import com.document.demo.models.enums.UrgencyLevel;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,4 +25,13 @@ public interface DocumentService {
     List<Documents> findAll();
 
     void save(Documents document);
+
+    List<Documents> findRecentDocumentsByType(DocumentType type, int limit);
+    List<Documents> findRecentDocuments(int limit);
+
+    Page<Documents> findByType(DocumentType type, Pageable pageable);
+    Page<Documents> findAll(Pageable pageable);
+
+    Page<Documents> findByTypeAndStatus(DocumentType type, DocumentStatus status, Pageable pageable);
+    Page<Documents> findByStatus(DocumentStatus status, Pageable pageable);
 }

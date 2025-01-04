@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.List;
 
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Data
 @NoArgsConstructor
@@ -26,5 +27,6 @@ public class Department {
     private String location;
 
     @DBRef
+    @JsonIgnoreProperties({"department"})
     private List<User> users;
 }

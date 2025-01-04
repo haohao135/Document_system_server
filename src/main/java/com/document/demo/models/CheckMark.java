@@ -1,5 +1,6 @@
 package com.document.demo.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.springframework.data.annotation.Id;
@@ -19,8 +20,10 @@ public class CheckMark {
     private String name;
 
     @DBRef
+    @JsonIgnoreProperties("checkMarks")
     private Folder folder;
 
     @DBRef
+    @JsonIgnoreProperties("checkMarks")
     private Documents document;
 }

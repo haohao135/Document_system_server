@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.List;
 import lombok.*;
@@ -24,5 +25,6 @@ public class Folder {
     private User createdBy; // n user - 1 folder
 
     @DBRef
+    @JsonIgnore
     private List<CheckMark> checkMarks; // 1 folder - n checkMarks
 }

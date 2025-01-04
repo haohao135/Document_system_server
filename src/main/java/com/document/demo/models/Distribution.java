@@ -4,13 +4,11 @@ import com.document.demo.models.enums.DistributionStatus;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,6 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Getter
 @Document(collection = "distributions")
 public class Distribution {
     @Id
@@ -41,8 +40,10 @@ public class Distribution {
     private List<User> receivers;
 
     @DBRef
+    @JsonIgnore
     private Documents documents;
 
     @DBRef
+    @JsonIgnore
     private List<Comment> comments;
 }

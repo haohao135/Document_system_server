@@ -7,10 +7,7 @@ import com.document.demo.exception.ResourceAlreadyExistsException;
 import com.document.demo.exception.ResourceNotFoundException;
 import com.document.demo.models.Documents;
 import com.document.demo.models.User;
-import com.document.demo.models.enums.DocumentStatus;
-import com.document.demo.models.enums.TrackingActionType;
-import com.document.demo.models.enums.TrackingEntityType;
-import com.document.demo.models.enums.UrgencyLevel;
+import com.document.demo.models.enums.*;
 import com.document.demo.models.tracking.ChangeLog;
 import com.document.demo.repository.DocumentRepository;
 import com.document.demo.service.CloudinaryService;
@@ -20,6 +17,9 @@ import com.document.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -213,5 +213,89 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public void save(Documents document) {
         documentRepository.save(document);
+    }
+
+    @Override
+    public List<Documents> findRecentDocumentsByType(DocumentType type, int limit) {
+        try {
+            List<Documents> documents = documentRepository.findByTypeOrderByCreatedAtDesc(type, PageRequest.of(0, limit));
+            if (documents.isEmpty()) {
+                log.info("No recent documents found with type: {}", type);
+            }
+            return documents;
+        } catch (Exception e) {
+            log.error("Error finding recent documents by type: {}", type, e);
+            throw new RuntimeException("Error finding recent documents by type: " + type, e);
+        }
+    }
+
+    @Override
+    public List<Documents> findRecentDocuments(int limit) {
+        try {
+            List<Documents> documents = documentRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, limit));
+            if (documents.isEmpty()) {
+                log.info("No recent documents found");
+            }
+            return documents;
+        } catch (Exception e) {
+            log.error("Error finding recent documents", e);
+            throw new RuntimeException("Error finding recent documents", e);
+        }
+    }
+
+    @Override
+    public Page<Documents> findByType(DocumentType type, Pageable pageable) {
+        try {
+            Page<Documents> documents = documentRepository.findByType(type, pageable);
+            if (documents.isEmpty()) {
+                log.info("No documents found with type: {}", type);
+            }
+            return documents;
+        } catch (Exception e) {
+            log.error("Error finding documents by type: {}", type, e);
+            throw new RuntimeException("Error finding documents by type: " + type, e);
+        }
+    }
+
+    @Override
+    public Page<Documents> findAll(Pageable pageable) {
+        try {
+            Page<Documents> documents = documentRepository.findAll(pageable);
+            if (documents.isEmpty()) {
+                log.info("No documents found");
+            }
+            return documents;
+        } catch (Exception e) {
+            log.error("Error finding all documents", e);
+            throw new RuntimeException("Error finding all documents", e);
+        }
+    }
+
+    @Override
+    public Page<Documents> findByTypeAndStatus(DocumentType type, DocumentStatus status, Pageable pageable) {
+        try {
+            Page<Documents> documents = documentRepository.findByTypeAndStatus(type, status, pageable);
+            if (documents.isEmpty()) {
+                log.info("No documents found with type: {} and status: {}", type, status);
+            }
+            return documents;
+        } catch (Exception e) {
+            log.error("Error finding documents by type and status: {}, {}", type, status, e);
+            throw new RuntimeException("Error finding documents by type and status", e);
+        }
+    }
+
+    @Override
+    public Page<Documents> findByStatus(DocumentStatus status, Pageable pageable) {
+        try {
+            Page<Documents> documents = documentRepository.findByStatus(status, pageable);
+            if (documents.isEmpty()) {
+                log.info("No documents found with status: {}", status);
+            }
+            return documents;
+        } catch (Exception e) {
+            log.error("Error finding documents by status: {}", status, e);
+            throw new RuntimeException("Error finding documents by status", e);
+        }
     }
 }
