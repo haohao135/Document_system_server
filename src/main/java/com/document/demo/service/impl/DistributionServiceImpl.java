@@ -1,11 +1,11 @@
 package com.document.demo.service.impl;
 
 import com.document.demo.dto.request.TrackingRequest;
+import com.document.demo.exception.ResourceNotFoundException;
 import com.document.demo.models.Distribution;
 import com.document.demo.models.Documents;
 import com.document.demo.models.User;
 import com.document.demo.models.enums.DistributionStatus;
-import com.document.demo.exception.ResourceNotFoundException;
 import com.document.demo.models.enums.TrackingActionType;
 import com.document.demo.models.enums.TrackingEntityType;
 import com.document.demo.models.tracking.ChangeLog;
@@ -17,10 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 import static com.document.demo.utils.UpdateFieldUtils.updateField;
 
@@ -35,7 +34,6 @@ public class DistributionServiceImpl implements DistributionService {
     @Override
     @Transactional
     public Distribution createDistribution(Distribution distribution) {
-        distribution.setTimestamp(LocalDateTime.now());
         if (distribution.getStatus() == null) {
             distribution.setStatus(DistributionStatus.PENDING);
         }

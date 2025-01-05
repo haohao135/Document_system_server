@@ -1,5 +1,6 @@
 package com.document.demo.dto.response;
 
+import com.document.demo.models.Department;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,5 +19,5 @@ public class UserResponse {
     private String avatar;
     private String role;
     private String status;
-    private DepartmentResponse department;
+    private Department department;
 } 

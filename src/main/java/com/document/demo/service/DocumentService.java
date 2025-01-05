@@ -9,11 +9,12 @@ import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface DocumentService {
-    Documents createDocument(DocumentRequest document) throws FileUploadException;
+    Documents createDocument(DocumentRequest document) throws IOException;
     Documents updateDocument(String id, DocumentRequest document) throws FileUploadException;
     void deleteDocument(String id);
     Documents findById(String id);

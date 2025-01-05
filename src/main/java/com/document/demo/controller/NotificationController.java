@@ -1,13 +1,16 @@
 package com.document.demo.controller;
 
+import com.document.demo.dto.request.NotificationRequest;
 import com.document.demo.dto.response.ErrorResponse;
 import com.document.demo.dto.response.SuccessResponse;
 import com.document.demo.exception.ResourceNotFoundException;
 import com.document.demo.models.Notification;
 import com.document.demo.service.NotificationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -20,6 +23,28 @@ import java.util.Map;
 public class NotificationController {
 
     private final NotificationService notificationService;
+
+    @PostMapping("/create")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> createNotification(@Valid @RequestBody NotificationRequest request) {
+        try {
+            Notification savedNotification = notificationService.createNotification(request);
+            
+            return ResponseEntity.ok(new SuccessResponse(
+                "Notification created successfully",
+                savedNotification
+            ));
+            
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("Error creating notification: " + e.getMessage()));
+        }
+    }
 
     @GetMapping
     public ResponseEntity<?> getNotifications(

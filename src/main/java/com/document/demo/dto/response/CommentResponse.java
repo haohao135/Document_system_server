@@ -1,5 +1,6 @@
 package com.document.demo.dto.response;
 
+import com.document.demo.models.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,6 +16,6 @@ public class CommentResponse {
     private String id;
     private String comment;
     private LocalDateTime timestamp;
-    private UserResponse user;
+    private User user;
     private String distributionId;
 } 

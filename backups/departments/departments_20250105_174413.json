@@ -1,0 +1,48 @@
+[ {
+  "name" : "Khoa Công nghệ thông tin",
+  "description" : "Khoa Công nghệ thông tin là một trong những khoa chủ lực của trường, đào tạo các chuyên ngành về Công nghệ thông tin, Kỹ thuật phần mềm, An toàn thông tin.",
+  "location" : "Phòng C004, Số 19 Nguyễn Hữu Thọ, P. Tân Phong, Quận 7, Tp. Hồ Chí Minh",
+  "_id" : {
+    "timestamp" : 1735985721,
+    "date" : "2025-01-04T10:15:21.000+00:00"
+  },
+  "users" : [ {
+    "userId" : "67782f0c61b0de33389d6541",
+    "username" : "Vinny",
+    "password" : "$2a$10$VwWp4sURjhaTwzhqNcrGB.SDWMlS0INFsIJ32hUwS0JTvlv9s1SBO",
+    "avatar" : "https://res.cloudinary.com/dysmw04kc/image/upload/v1735978966/document-system/avatar/Vinny.jpg",
+    "background" : "https://res.cloudinary.com/dysmw04kc/image/upload/v1735978924/document-system/background/background.jpg",
+    "fullName" : "Nguyễn Trung Kiên",
+    "email" : "nguyntrungkin091@gmail.com",
+    "phone" : "0945454086",
+    "position" : "Trưởng khoa",
+    "role" : "ADMIN",
+    "status" : "ACTIVE",
+    "folders" : [ ],
+    "department" : {
+      "departmentId" : "67790a393e4ba5d1ac959778",
+      "name" : "Khoa Công nghệ thông tin",
+      "description" : "Khoa Công nghệ thông tin là một trong những khoa chủ lực của trường, đào tạo các chuyên ngành về Công nghệ thông tin, Kỹ thuật phần mềm, An toàn thông tin.",
+      "location" : "Phòng C004, Số 19 Nguyễn Hữu Thọ, P. Tân Phong, Quận 7, Tp. Hồ Chí Minh"
+    }
+  }, {
+    "userId" : "67782f6761b0de33389d6543",
+    "username" : "kien",
+    "password" : "$2a$10$XhjQ71Sg3rCvobNCOFXv0eLUY5yQN7CAeMLv5/2bue2b19XUUj7BC",
+    "avatar" : "https://res.cloudinary.com/dysmw04kc/image/upload/v1735978837/document-system/avatar/balloons.jpg",
+    "background" : "https://res.cloudinary.com/dysmw04kc/image/upload/v1735978924/document-system/background/background.jpg",
+    "fullName" : "Nguyễn Trung Kiên",
+    "email" : "9.nguyentrungkien12a@gmail.com",
+    "phone" : "0945454086",
+    "position" : "Giảng viên",
+    "role" : "USER",
+    "status" : "ACTIVE",
+    "folders" : [ ],
+    "department" : {
+      "departmentId" : "67790a393e4ba5d1ac959778",
+      "name" : "Khoa Công nghệ thông tin",
+      "description" : "Khoa Công nghệ thông tin là một trong những khoa chủ lực của trường, đào tạo các chuyên ngành về Công nghệ thông tin, Kỹ thuật phần mềm, An toàn thông tin.",
+      "location" : "Phòng C004, Số 19 Nguyễn Hữu Thọ, P. Tân Phong, Quận 7, Tp. Hồ Chí Minh"
+    }
+  } ]
+} ]

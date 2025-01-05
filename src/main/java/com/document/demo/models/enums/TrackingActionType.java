@@ -27,6 +27,10 @@ public enum TrackingActionType {
     DOWNLOAD("Downloaded"),
     PRINT("Printed"),
     STATUS_CHANGE("Changed status"),
+
+    // Department specific
+    ADD_USER("Added user"),
+    REMOVE_USER("Removed user"),
     
     // System
     SYSTEM_CONFIG("System configuration changed"),

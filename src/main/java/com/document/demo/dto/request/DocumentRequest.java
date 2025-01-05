@@ -6,6 +6,7 @@ import com.document.demo.models.enums.UrgencyLevel;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -26,9 +27,19 @@ public class DocumentRequest {
     @NotBlank(message = "Content is required")
     private String content;
 
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime issueDate;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime receivedDate;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime sendDate;
+
+    @NotBlank(message = "Agency is required")
+    private String agencyUnit;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime expirationDate;
 
     @NotNull(message = "Type is required")
@@ -39,9 +50,6 @@ public class DocumentRequest {
 
     @NotNull(message = "Urgency level is required")
     private UrgencyLevel urgencyLevel;
-
-    @NotBlank(message = "Attachment is required")
-    private String attachment;
     private String keywords;
     private String logNote;
 

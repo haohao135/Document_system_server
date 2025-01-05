@@ -1,5 +1,6 @@
 package com.document.demo.service.impl;
 
+import com.document.demo.dto.request.NotificationRequest;
 import com.document.demo.dto.request.TrackingRequest;
 import com.document.demo.exception.ResourceNotFoundException;
 import com.document.demo.models.Notification;
@@ -8,6 +9,7 @@ import com.document.demo.models.User;
 import com.document.demo.models.enums.TrackingActionType;
 import com.document.demo.models.enums.TrackingEntityType;
 import com.document.demo.repository.NotificationRepository;
+import com.document.demo.service.DocumentService;
 import com.document.demo.service.NotificationService;
 import com.document.demo.service.UserService;
 import com.document.demo.service.TrackingService;
@@ -28,11 +30,19 @@ public class NotificationServiceImpl implements NotificationService {
     private final UserService userService;
     private final TrackingService trackingService;
     private final UserServiceImpl userServiceImpl;
+    private final DocumentService documentService;
 
     @Override
     @Transactional
-    public Notification createNotification(Notification notification) {
-        Notification savedNotification = notificationRepository.save(notification);
+    public Notification createNotification(NotificationRequest notification) {
+        User user = userService.getUserById(notification.getUserId());
+        Documents document = documentService.findById(notification.getDocumentId());
+
+        Notification savedNotification = notificationRepository.save(Notification.builder()
+            .message(notification.getMessage())
+            .user(user)
+            .document(document)
+            .build());
         
         // Track notification creation
         trackingService.track(TrackingRequest.builder()

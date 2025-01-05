@@ -102,4 +102,10 @@ public class GlobalExceptionHandler {
         log.error("File upload error: {}", ex.getMessage());
         return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<?> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
+        log.error("User already exists: {}", ex.getMessage());
+        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.CONFLICT);
+    }
 } 

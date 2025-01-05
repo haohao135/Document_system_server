@@ -3,17 +3,17 @@ package com.document.demo.models;
 import com.document.demo.models.enums.DocumentStatus;
 import com.document.demo.models.enums.DocumentType;
 import com.document.demo.models.enums.UrgencyLevel;
-import jakarta.validation.constraints.*;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.DBRef;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.index.Indexed;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import lombok.*;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -51,7 +51,7 @@ public class Documents implements Cloneable{
     
     @NotNull
     @Enumerated(EnumType.STRING)
-    private DocumentStatus status = DocumentStatus.DRAFT;
+    private DocumentStatus status = DocumentStatus.PENDING;
 
     @NotBlank(message = "Document attachment is required")
     private String attachment;
@@ -74,12 +74,6 @@ public class Documents implements Cloneable{
 
     @DBRef
     private User createBy;
-
-    @DBRef
-    private List<CheckMark> checkMarks;
-
-    @DBRef
-    private List<Distribution> distributions;
 
     @Override
     public Documents clone() {

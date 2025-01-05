@@ -280,14 +280,14 @@ public class AuthController {
             String accessToken = getJwtFromRequest(request);
             String refreshToken = request.getHeader("Refresh-Token");
 
-            // Kiểm tra tokens có tồn tại không
+            // check if tokens are provided
             if (accessToken == null && refreshToken == null) {
                 return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorResponse("No tokens provided"));
             }
 
-            // Kiểm tra tokens có trong blacklist chưa
+            // Check if tokens are already invalidated
             if (accessToken != null && !tokenProvider.validateToken(accessToken)) {
                 return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)

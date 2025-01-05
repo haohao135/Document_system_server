@@ -28,6 +28,7 @@ public class Notification {
     private boolean read = false;
 
     @DBRef
+    @JsonIgnore
     private User user;
 
     @DBRef

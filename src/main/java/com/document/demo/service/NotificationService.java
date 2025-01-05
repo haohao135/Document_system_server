@@ -1,11 +1,12 @@
 package com.document.demo.service;
 
+import com.document.demo.dto.request.NotificationRequest;
 import com.document.demo.models.Notification;
 import com.document.demo.models.Documents;
 import java.util.List;
 
 public interface NotificationService {
-    Notification createNotification(Notification notification);
+    Notification createNotification(NotificationRequest notification);
     void markAsRead(String notificationId);
     void markAllAsRead(String userId);
     void deleteNotification(String id);

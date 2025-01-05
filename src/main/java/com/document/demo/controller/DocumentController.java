@@ -5,7 +5,6 @@ import com.document.demo.dto.request.DocumentRequest;
 import com.document.demo.dto.response.*;
 import com.document.demo.models.Distribution;
 import com.document.demo.models.Documents;
-import com.document.demo.models.User;
 import com.document.demo.models.enums.DocumentStatus;
 import com.document.demo.models.enums.DocumentType;
 import com.document.demo.service.DistributionService;
@@ -14,7 +13,6 @@ import com.document.demo.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,9 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/documents")
@@ -37,15 +34,14 @@ public class DocumentController {
     private final DistributionService distributionService;
     private final UserService userService;
 
-    @PostMapping("/incoming/create")
+    @PostMapping("/create")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<IncomingDocumentResponse> createIncomingDocument(
-            @Valid @ModelAttribute DocumentRequest request) throws FileUploadException {
-        
-        request.setType(DocumentType.INCOMING);
+    public ResponseEntity<DocumentResponse> createDocument(
+            @Valid @ModelAttribute DocumentRequest request) throws IOException {
+
         Documents document = documentService.createDocument(request);
 
-        IncomingDocumentResponse response = IncomingDocumentResponse.builder()
+        DocumentResponse response = DocumentResponse.builder()
                 .documentId(document.getDocumentId())
                 .number(document.getNumber())
                 .title(document.getTitle())
@@ -54,6 +50,7 @@ public class DocumentController {
                 .receivedDate(document.getReceivedDate())
                 .sendDate(document.getSendDate())
                 .expirationDate(document.getExpirationDate())
+                .agencyUnit(document.getAgencyUnit())
                 .type(document.getType())
                 .urgencyLevel(document.getUrgencyLevel())
                 .attachment(document.getAttachment())
@@ -110,22 +107,23 @@ public class DocumentController {
                 documents = documentService.findRecentDocuments(limit);
             }
 
-            List<IncomingDocumentResponse> responses = documents.stream()
-                .map(doc -> IncomingDocumentResponse.builder()
+            List<DocumentResponse> responses = documents.stream()
+                .map(doc -> DocumentResponse.builder()
                     .documentId(doc.getDocumentId())
                     .number(doc.getNumber())
                     .title(doc.getTitle())
                     .content(doc.getContent())
+                    .issueDate(doc.getIssueDate())
+                    .receivedDate(doc.getReceivedDate())
+                    .sendDate(doc.getSendDate())
+                    .expirationDate(doc.getExpirationDate())
+                    .agencyUnit(doc.getAgencyUnit())
                     .type(doc.getType())
                     .status(doc.getStatus())
                     .urgencyLevel(doc.getUrgencyLevel())
                     .attachment(doc.getAttachment())
                     .keywords(doc.getKeywords())
                     .logNote(doc.getLogNote())
-                    .issueDate(doc.getIssueDate())
-                    .receivedDate(doc.getReceivedDate())
-                    .sendDate(doc.getSendDate())
-                    .expirationDate(doc.getExpirationDate())
                     .createdAt(doc.getCreatedAt())
                     .creator(doc.getCreateBy())
                     .build()
@@ -180,12 +178,6 @@ public class DocumentController {
                     .keywords(doc.getKeywords())
                     .logNote(doc.getLogNote())
                     .createdAt(doc.getCreatedAt())
-                    .creator(convertToUserResponse(doc.getCreateBy()))
-                    .distributions(doc.getDistributions() != null ?
-                        doc.getDistributions().stream()
-                            .map(this::convertToDistributionResponse)
-                            .collect(Collectors.toList()) :
-                        new ArrayList<>())
                     .build()
             );
 
@@ -196,76 +188,4 @@ public class DocumentController {
                 .body(new ErrorResponse("Error retrieving documents: " + e.getMessage()));
         }
     }
-
-    @PostMapping("/outgoing/create")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<DocumentResponse> createOutgoingDocument(
-            @Valid @ModelAttribute DocumentRequest request) throws FileUploadException {
-
-        request.setType(DocumentType.OUTGOING);
-        Documents document = documentService.createDocument(request);
-
-        DocumentResponse response = DocumentResponse.builder()
-                .documentId(document.getDocumentId())
-                .number(document.getNumber())
-                .title(document.getTitle())
-                .content(document.getContent())
-                .issueDate(document.getIssueDate())
-                .receivedDate(document.getReceivedDate())
-                .sendDate(document.getSendDate())
-                .expirationDate(document.getExpirationDate())
-                .type(document.getType())
-                .urgencyLevel(document.getUrgencyLevel())
-                .attachment(document.getAttachment())
-                .keywords(document.getKeywords())
-                .logNote(document.getLogNote())
-                .status(document.getStatus())
-                .createdAt(document.getCreatedAt())
-                .creator(convertToUserResponse(document.getCreateBy()))
-                .distributions(document.getDistributions() != null ?
-                    document.getDistributions().stream()
-                        .map(this::convertToDistributionResponse)
-                        .collect(Collectors.toList()) :
-                    new ArrayList<>())
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
-
-    private UserResponse convertToUserResponse(User user) {
-        if (user == null) return null;
-        return UserResponse.builder()
-                .userId(user.getUserId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .fullName(user.getFullName())
-                .position(user.getPosition())
-                .avatar(user.getAvatar())
-                .role(user.getRole().name())
-                .status(user.getStatus().name())
-                .department(user.getDepartment() != null ?
-                        DepartmentResponse.builder()
-                            .id(user.getDepartment().getDepartmentId())
-                            .name(user.getDepartment().getName())
-                            .description(user.getDepartment().getDescription())
-                            .location(user.getDepartment().getLocation())
-                            .build() : null)
-                .build();
-    }
-
-    private DistributionResponse convertToDistributionResponse(Distribution dist) {
-        if (dist == null) return null;
-        return DistributionResponse.builder()
-                .distributionId(dist.getDistributionId())
-                .status(dist.getStatus().name())
-                .note(dist.getNote())
-                .timestamp(dist.getTimestamp())
-                .sender(dist.getSender())
-                .receivers(dist.getReceivers() != null ?
-                    dist.getReceivers() :
-                    new ArrayList<>())
-                .build();
-    }
-
-
 } 

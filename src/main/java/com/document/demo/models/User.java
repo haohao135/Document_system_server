@@ -3,7 +3,6 @@ package com.document.demo.models;
 import com.document.demo.models.enums.UserRole;
 import com.document.demo.models.enums.UserStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Email;
@@ -21,10 +20,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -39,6 +36,7 @@ public class User implements UserDetails {
     @Indexed(unique = true)
     private String username;
 
+    @JsonIgnore
     @NotBlank(message = "Password is required")
     private String password;
 
@@ -72,27 +70,7 @@ public class User implements UserDetails {
     private UserStatus status = UserStatus.INACTIVE;
 
     @DBRef
-    private List<Folder> folders = new ArrayList<>();
-
-    @DBRef
-    @JsonIgnore
-    private List<Documents> documents = new ArrayList<>();
-
-    @JsonIgnoreProperties({"users"})
-    @DBRef
     private Department department;
-
-    @DBRef
-    @JsonIgnore
-    private List<Distribution> sentDistributions = new ArrayList<>();
-
-    @DBRef
-    @JsonIgnore
-    private List<Distribution> receivedDistributions = new ArrayList<>();
-
-    @DBRef
-    @JsonIgnore
-    private List<Tracking> trackings = new ArrayList<>();
 
     // UserDetails implementation
     @Override

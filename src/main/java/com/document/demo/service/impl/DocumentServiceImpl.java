@@ -36,11 +36,10 @@ public class DocumentServiceImpl implements DocumentService {
     private final UserService userService;
     private final FileStorageService fileStorageService;
     private final TrackingService trackingService;
-    private final UserServiceImpl userServiceImpl;
 
     @Override
     @Transactional
-    public Documents createDocument(DocumentRequest document) throws FileUploadException {
+    public Documents createDocument(DocumentRequest document) throws IOException {
         if (documentRepository.existsByNumber(document.getNumber())) {
             throw new ResourceAlreadyExistsException("Document number already exists");
         }
@@ -53,13 +52,13 @@ public class DocumentServiceImpl implements DocumentService {
                 .receivedDate(document.getReceivedDate())
                 .sendDate(document.getSendDate())
                 .expirationDate(document.getExpirationDate())
+                .agencyUnit(document.getAgencyUnit())
                 .type(document.getType())
                 .urgencyLevel(document.getUrgencyLevel())
-                .attachment(document.getAttachment())
                 .keywords(document.getKeywords())
                 .logNote(document.getLogNote())
                 .createdAt(LocalDateTime.now())
-                .status(DocumentStatus.DRAFT)
+                .status(document.getStatus())
                 .createBy(userService.getUserById(document.getUserId()))
                 .build();
 
@@ -77,17 +76,12 @@ public class DocumentServiceImpl implements DocumentService {
 
         // Track document creation
         trackingService.track(TrackingRequest.builder()
-            .actor(userServiceImpl.getCurrentUser())
+            .actor(userService.getCurrentUser())
             .entityType(TrackingEntityType.DOCUMENT)
             .entityId(savedDocument.getDocumentId())
             .action(TrackingActionType.CREATE)
             .metadata(Map.of(
-                "number", savedDocument.getNumber(),
-                "title", savedDocument.getTitle(),
-                "type", savedDocument.getType(),
-                "urgencyLevel", savedDocument.getUrgencyLevel().toString(),
-                "status", savedDocument.getStatus().toString()
-            ))
+                "document", savedDocument))
             .build());
 
         return savedDocument;
@@ -130,7 +124,7 @@ public class DocumentServiceImpl implements DocumentService {
         
         // Track document update
         trackingService.track(TrackingRequest.builder()
-            .actor(userServiceImpl.getCurrentUser())
+            .actor(userService.getCurrentUser())
             .entityType(TrackingEntityType.DOCUMENT)
             .entityId(id)
             .action(TrackingActionType.UPDATE)
@@ -174,7 +168,7 @@ public class DocumentServiceImpl implements DocumentService {
         
         // Track document deletion
         trackingService.track(TrackingRequest.builder()
-            .actor(userServiceImpl.getCurrentUser())
+            .actor(userService.getCurrentUser())
             .entityType(TrackingEntityType.DOCUMENT)
             .entityId(id)
             .action(TrackingActionType.DELETE)
