@@ -8,7 +8,6 @@ import com.document.demo.models.Documents;
 import com.document.demo.models.User;
 import com.document.demo.models.enums.DocumentStatus;
 import com.document.demo.models.enums.DocumentType;
-import com.document.demo.service.CloudinaryService;
 import com.document.demo.service.DistributionService;
 import com.document.demo.service.DocumentService;
 import com.document.demo.service.UserService;
@@ -23,16 +22,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/documents")
@@ -42,17 +36,13 @@ public class DocumentController {
     private final DocumentService documentService;
     private final DistributionService distributionService;
     private final UserService userService;
-    private final CloudinaryService cloudinaryService;
 
     @PostMapping("/incoming/create")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<IncomingDocumentResponse> createIncomingDocument(
             @Valid @ModelAttribute DocumentRequest request) throws FileUploadException {
         
-        // create document with type = INCOMING
-        String attachmentUrl = cloudinaryService.uploadFile(request.getFile());
-        request.setAttachment(attachmentUrl);
-
+        request.setType(DocumentType.INCOMING);
         Documents document = documentService.createDocument(request);
 
         IncomingDocumentResponse response = IncomingDocumentResponse.builder()
@@ -77,7 +67,7 @@ public class DocumentController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/incoming/distribute")
+    @PostMapping("/distribute")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<DistributionResponse> distributeIncomingDocument(
             @Valid @ModelAttribute DistributeRequest request) {
@@ -124,7 +114,7 @@ public class DocumentController {
                 .map(doc -> IncomingDocumentResponse.builder()
                     .documentId(doc.getDocumentId())
                     .number(doc.getNumber())
-                    .title(doc.getTitle()) 
+                    .title(doc.getTitle())
                     .content(doc.getContent())
                     .type(doc.getType())
                     .status(doc.getStatus())
@@ -162,7 +152,7 @@ public class DocumentController {
         try {
             Sort.Direction dir = Sort.Direction.fromString(direction);
             Pageable pageable = PageRequest.of(page, size, Sort.by(dir, sortBy));
-            
+
             Page<Documents> documents;
             if (type != null && status != null) {
                 documents = documentService.findByTypeAndStatus(type, status, pageable);
@@ -191,10 +181,10 @@ public class DocumentController {
                     .logNote(doc.getLogNote())
                     .createdAt(doc.getCreatedAt())
                     .creator(convertToUserResponse(doc.getCreateBy()))
-                    .distributions(doc.getDistributions() != null ? 
+                    .distributions(doc.getDistributions() != null ?
                         doc.getDistributions().stream()
                             .map(this::convertToDistributionResponse)
-                            .collect(Collectors.toList()) : 
+                            .collect(Collectors.toList()) :
                         new ArrayList<>())
                     .build()
             );
@@ -205,6 +195,41 @@ public class DocumentController {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse("Error retrieving documents: " + e.getMessage()));
         }
+    }
+
+    @PostMapping("/outgoing/create")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<DocumentResponse> createOutgoingDocument(
+            @Valid @ModelAttribute DocumentRequest request) throws FileUploadException {
+
+        request.setType(DocumentType.OUTGOING);
+        Documents document = documentService.createDocument(request);
+
+        DocumentResponse response = DocumentResponse.builder()
+                .documentId(document.getDocumentId())
+                .number(document.getNumber())
+                .title(document.getTitle())
+                .content(document.getContent())
+                .issueDate(document.getIssueDate())
+                .receivedDate(document.getReceivedDate())
+                .sendDate(document.getSendDate())
+                .expirationDate(document.getExpirationDate())
+                .type(document.getType())
+                .urgencyLevel(document.getUrgencyLevel())
+                .attachment(document.getAttachment())
+                .keywords(document.getKeywords())
+                .logNote(document.getLogNote())
+                .status(document.getStatus())
+                .createdAt(document.getCreatedAt())
+                .creator(convertToUserResponse(document.getCreateBy()))
+                .distributions(document.getDistributions() != null ?
+                    document.getDistributions().stream()
+                        .map(this::convertToDistributionResponse)
+                        .collect(Collectors.toList()) :
+                    new ArrayList<>())
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     private UserResponse convertToUserResponse(User user) {
@@ -241,4 +266,6 @@ public class DocumentController {
                     new ArrayList<>())
                 .build();
     }
+
+
 } 

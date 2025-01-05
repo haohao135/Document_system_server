@@ -10,10 +10,7 @@ import com.document.demo.models.User;
 import com.document.demo.models.enums.*;
 import com.document.demo.models.tracking.ChangeLog;
 import com.document.demo.repository.DocumentRepository;
-import com.document.demo.service.CloudinaryService;
-import com.document.demo.service.DocumentService;
-import com.document.demo.service.TrackingService;
-import com.document.demo.service.UserService;
+import com.document.demo.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
@@ -23,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +34,7 @@ import static com.document.demo.utils.UpdateFieldUtils.updateField;
 public class DocumentServiceImpl implements DocumentService {
     private final DocumentRepository documentRepository;
     private final UserService userService;
-    private final CloudinaryService cloudinaryService;
+    private final FileStorageService fileStorageService;
     private final TrackingService trackingService;
     private final UserServiceImpl userServiceImpl;
 
@@ -65,9 +63,14 @@ public class DocumentServiceImpl implements DocumentService {
                 .createBy(userService.getUserById(document.getUserId()))
                 .build();
 
-        if (document.getAttachment() != null && !document.getAttachment().isEmpty()) {
-            String attachmentUrl = cloudinaryService.uploadFile(document.getFile());
-            documents.setAttachment(attachmentUrl);
+        if (document.getFile() != null && !document.getFile().isEmpty()) {
+            try {
+                String fileName = fileStorageService.storeFile(document.getFile());
+                documents.setAttachment(fileName);
+            } catch (IOException e) {
+                log.error("Error storing document file", e);
+                throw new FileUploadException("Could not store file", e);
+            }
         }
 
         Documents savedDocument = documentRepository.save(documents);
@@ -118,7 +121,7 @@ public class DocumentServiceImpl implements DocumentService {
         updateField(changes, "updateAt", existingDocument.getUpdatedAt(), LocalDateTime.now(), existingDocument::setUpdatedAt);
 
         // Handle attachment update
-        if (document.getAttachment() != null && !document.getAttachment().isEmpty()) {
+        if (document.getFile() != null && !document.getFile().isEmpty()) {
             changes.put("attachment", new ChangeLog());
             handleAttachmentUpdate(existingDocument, document);
         }
@@ -138,23 +141,35 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private void handleAttachmentUpdate(Documents existingDocument, DocumentRequest document) throws FileUploadException {
-        // Delete existing attachment (it maybe cannot delete if you want to restore it)
-        if (existingDocument.getAttachment() != null) {
-            String publicId = existingDocument.getAttachment().substring(
-                existingDocument.getAttachment().lastIndexOf("/") + 1,
-                existingDocument.getAttachment().lastIndexOf(".")
-            );
-            cloudinaryService.deleteFile(publicId);
+        try {
+            // Delete existing attachment if exists
+            if (existingDocument.getAttachment() != null) {
+                fileStorageService.deleteFile(existingDocument.getAttachment());
+            }
+            
+            // Store new file
+            String fileName = fileStorageService.storeFile(document.getFile());
+            existingDocument.setAttachment(fileName);
+        } catch (IOException e) {
+            log.error("Error updating document attachment", e);
+            throw new FileUploadException("Could not update file", e);
         }
-        
-        String attachmentUrl = cloudinaryService.uploadFile(document.getFile());
-        existingDocument.setAttachment(attachmentUrl);
     }
 
     @Override
     @Transactional
     public void deleteDocument(String id) {
         Documents document = findById(id);
+        
+        // Delete attachment if exists
+        if (document.getAttachment() != null) {
+            try {
+                fileStorageService.deleteFile(document.getAttachment());
+            } catch (Exception e) {
+                log.error("Error deleting document attachment", e);
+            }
+        }
+        
         documentRepository.delete(document);
         
         // Track document deletion

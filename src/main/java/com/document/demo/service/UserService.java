@@ -6,10 +6,10 @@ import com.document.demo.models.enums.UserRole;
 import com.document.demo.models.enums.UserStatus;
 import com.document.demo.dto.request.ChangePasswordRequest;
 import com.document.demo.dto.request.UpdateProfileRequest;
-import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface UserService extends UserDetailsService {
@@ -21,7 +21,7 @@ public interface UserService extends UserDetailsService {
     List<User> findByDepartment(String departmentId);
     List<User> findByRole(UserRole role);
     void changePassword(String userId, ChangePasswordRequest request, boolean isForgot);
-    void updateProfile(String userId, UpdateProfileRequest request) throws FileUploadException;
+    void updateProfile(String userId, UpdateProfileRequest request) throws IOException;
     void updateStatus(String userId, UserStatus status);
     void updateRole(String userId, UserRole role);
     boolean existsByUsername(String username);

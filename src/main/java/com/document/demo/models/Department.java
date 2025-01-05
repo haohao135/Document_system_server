@@ -21,6 +21,9 @@ public class Department {
 
     @NotBlank(message = "Department name is required")
     private String name;
+
+    @NotBlank(message = "Hotline is required")
+    private String hotline;
     private String description;
 
     @NotBlank(message = "Location is required")

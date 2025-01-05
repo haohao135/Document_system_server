@@ -79,15 +79,27 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(PrintException.class)
-    public ResponseEntity<?> handlePrintException(PrintException ex) {
-        log.error("Print error: {}", ex.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
     @ExceptionHandler(FileDownloadException.class)
     public ResponseEntity<?> handleFileDownloadException(FileDownloadException ex) {
         log.error("File download error: {}", ex.getMessage());
+        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<?> handleFileStorageException(FileStorageException ex) {
+        log.error("File storage error: {}", ex.getMessage());
+        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(FileNotFoundException.class)
+    public ResponseEntity<?> handleFileNotFoundException(FileNotFoundException ex) {
+        log.error("File not found: {}", ex.getMessage());
+        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(FileUploadException.class)
+    public ResponseEntity<?> handleFileUploadException(FileUploadException ex) {
+        log.error("File upload error: {}", ex.getMessage());
         return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 } 

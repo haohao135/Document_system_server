@@ -16,12 +16,11 @@ import com.document.demo.models.enums.UserStatus;
 import com.document.demo.models.tracking.ChangeLog;
 import com.document.demo.repository.DepartmentRepository;
 import com.document.demo.repository.UserRepository;
-import com.document.demo.service.CloudinaryService;
+import com.document.demo.service.FileStorageService;
 import com.document.demo.service.TrackingService;
 import com.document.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +33,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +48,7 @@ public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
     private final TrackingService trackingService;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-    private final CloudinaryService cloudinaryService;
+    private final FileStorageService fileStorageService;
     private final DepartmentRepository departmentRepository;
 
     @Override
@@ -165,7 +165,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     @Transactional
-    public void updateProfile(String userId, UpdateProfileRequest request) throws FileUploadException {
+    public void updateProfile(String userId, UpdateProfileRequest request) throws IOException {
         User user = getUserById(userId);
 
         Map<String, ChangeLog> changes = new HashMap<>();
@@ -198,18 +198,15 @@ public class UserServiceImpl implements UserService{
             .build());
     }
 
-    private void handleImageUpdate(UpdateProfileRequest request, String getImageUrl, Consumer<String> setter) throws FileUploadException {
-        // Delete existing image (it cannot delete if you want to restore it)
-        if (getImageUrl != null) {
-            String publicId = getImageUrl.substring(
-                getImageUrl.lastIndexOf("/") + 1,
-                getImageUrl.lastIndexOf(".")
-            );
-            cloudinaryService.deleteFile(publicId);
+    private void handleImageUpdate(UpdateProfileRequest request, String currentImagePath, Consumer<String> setter) throws IOException {
+        // Delete existing image if exists
+        if (currentImagePath != null) {
+            fileStorageService.deleteFile(currentImagePath);
         }
 
-        String imageUrl = cloudinaryService.uploadFile(request.getAvatarFile());
-        setter.accept(imageUrl);
+        // Store new image and get file path
+        String newImagePath = fileStorageService.storeFile(request.getAvatarFile());
+        setter.accept(newImagePath);
     }
 
     @Override

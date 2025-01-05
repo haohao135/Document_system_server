@@ -41,6 +41,9 @@ public class Documents implements Cloneable{
     private LocalDateTime receivedDate;
     private LocalDateTime sendDate;
 
+    @NotBlank(message = "Agency is required")
+    private String agencyUnit;
+
     @Builder.Default
     @NotNull(message = "Document type is required")
     @Enumerated(EnumType.STRING)
