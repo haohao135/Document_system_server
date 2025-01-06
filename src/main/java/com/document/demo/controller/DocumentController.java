@@ -63,6 +63,33 @@ public class DocumentController {
 
         return ResponseEntity.ok(response);
     }
+    @PostMapping("/update")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<DocumentResponse> updateDocument(
+            @Valid @ModelAttribute DocumentRequest request, @PathVariable String id) throws IOException{
+        Documents document = documentService.updateDocument(id, request);
+        DocumentResponse response = DocumentResponse.builder()
+                .documentId(document.getDocumentId())
+                .number(document.getNumber())
+                .title(document.getTitle())
+                .content(document.getContent())
+                .issueDate(document.getIssueDate())
+                .receivedDate(document.getReceivedDate())
+                .sendDate(document.getSendDate())
+                .expirationDate(document.getExpirationDate())
+                .agencyUnit(document.getAgencyUnit())
+                .type(document.getType())
+                .urgencyLevel(document.getUrgencyLevel())
+                .attachment(document.getAttachment())
+                .keywords(document.getKeywords())
+                .logNote(document.getLogNote())
+                .status(document.getStatus())
+                .createdAt(document.getCreatedAt())
+                .creator(document.getCreateBy())
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/distribute")
     @PreAuthorize("isAuthenticated()")
