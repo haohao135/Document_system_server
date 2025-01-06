@@ -14,8 +14,6 @@ public class UpdateProfileRequest {
     private String position;
     private String email;
     private String phone;
-    private String avatar;
-    private String background;
     private MultipartFile avatarFile;
     private MultipartFile backgroundFile;
 } 

@@ -10,17 +10,18 @@ import com.document.demo.models.User;
 import com.document.demo.models.enums.*;
 import com.document.demo.models.tracking.ChangeLog;
 import com.document.demo.repository.DocumentRepository;
-import com.document.demo.service.*;
+import com.document.demo.service.DocumentService;
+import com.document.demo.service.S3Service;
+import com.document.demo.service.TrackingService;
+import com.document.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -34,12 +35,12 @@ import static com.document.demo.utils.UpdateFieldUtils.updateField;
 public class DocumentServiceImpl implements DocumentService {
     private final DocumentRepository documentRepository;
     private final UserService userService;
-    private final FileStorageService fileStorageService;
+    private final S3Service s3Service;
     private final TrackingService trackingService;
 
     @Override
     @Transactional
-    public Documents createDocument(DocumentRequest document) throws IOException {
+    public Documents createDocument(DocumentRequest document) {
         if (documentRepository.existsByNumber(document.getNumber())) {
             throw new ResourceAlreadyExistsException("Document number already exists");
         }
@@ -63,13 +64,8 @@ public class DocumentServiceImpl implements DocumentService {
                 .build();
 
         if (document.getFile() != null && !document.getFile().isEmpty()) {
-            try {
-                String fileName = fileStorageService.storeFile(document.getFile());
-                documents.setAttachment(fileName);
-            } catch (IOException e) {
-                log.error("Error storing document file", e);
-                throw new FileUploadException("Could not store file", e);
-            }
+            String fileName = s3Service.uploadFile(document.getFile());
+            documents.setAttachment(fileName);
         }
 
         Documents savedDocument = documentRepository.save(documents);
@@ -89,7 +85,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional
-    public Documents updateDocument(String id, DocumentRequest document) throws FileUploadException {
+    public Documents updateDocument(String id, DocumentRequest document) {
         Documents existingDocument = findById(id);
 
         if (document.getNumber() != null && !document.getNumber().equals(existingDocument.getNumber()) 
@@ -107,6 +103,7 @@ public class DocumentServiceImpl implements DocumentService {
         updateField(changes, "receivedDate", existingDocument.getReceivedDate(), document.getReceivedDate(), existingDocument::setReceivedDate);
         updateField(changes, "sendDate", existingDocument.getSendDate(), document.getSendDate(), existingDocument::setSendDate);
         updateField(changes, "expirationDate", existingDocument.getExpirationDate(), document.getExpirationDate(), existingDocument::setExpirationDate);
+        updateField(changes, "agencyUnit", existingDocument.getAgencyUnit(), document.getAgencyUnit(), existingDocument::setAgencyUnit);
         updateField(changes, "type", existingDocument.getType(), document.getType(), existingDocument::setType);
         updateField(changes, "urgencyLevel", existingDocument.getUrgencyLevel(), document.getUrgencyLevel(), existingDocument::setUrgencyLevel);
         updateField(changes, "keywords", existingDocument.getKeywords(), document.getKeywords(), existingDocument::setKeywords);
@@ -134,20 +131,15 @@ public class DocumentServiceImpl implements DocumentService {
         return updatedDocument;
     }
 
-    private void handleAttachmentUpdate(Documents existingDocument, DocumentRequest document) throws FileUploadException {
-        try {
-            // Delete existing attachment if exists
-            if (existingDocument.getAttachment() != null) {
-                fileStorageService.deleteFile(existingDocument.getAttachment());
-            }
-            
-            // Store new file
-            String fileName = fileStorageService.storeFile(document.getFile());
-            existingDocument.setAttachment(fileName);
-        } catch (IOException e) {
-            log.error("Error updating document attachment", e);
-            throw new FileUploadException("Could not update file", e);
+    private void handleAttachmentUpdate(Documents existingDocument, DocumentRequest document) {
+        // Delete existing attachment if exists
+        if (existingDocument.getAttachment() != null) {
+            s3Service.deleteFile(existingDocument.getAttachment());
         }
+
+        // Store new file
+        String fileName = s3Service.uploadFile(document.getFile());
+        existingDocument.setAttachment(fileName);
     }
 
     @Override
@@ -158,7 +150,7 @@ public class DocumentServiceImpl implements DocumentService {
         // Delete attachment if exists
         if (document.getAttachment() != null) {
             try {
-                fileStorageService.deleteFile(document.getAttachment());
+                s3Service.deleteFile(document.getAttachment());
             } catch (Exception e) {
                 log.error("Error deleting document attachment", e);
             }
