@@ -64,6 +64,7 @@ public class DocumentController {
         return ResponseEntity.ok(response);
     }
 
+    // TODO: Implement the distributeIncomingDocument method
     @PostMapping("/distribute")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<DistributionResponse> distributeIncomingDocument(

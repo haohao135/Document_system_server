@@ -1,5 +1,6 @@
 package com.document.demo.models;
 
+import com.document.demo.models.enums.DistributionAction;
 import com.document.demo.models.enums.DistributionStatus;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -26,6 +27,10 @@ public class Distribution {
     @NotNull(message = "Status is required")
     @Enumerated(EnumType.STRING)
     private DistributionStatus status = DistributionStatus.PENDING;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    private DistributionAction action = DistributionAction.VIEW_AND_APPROVE;
 
     private String note;
 

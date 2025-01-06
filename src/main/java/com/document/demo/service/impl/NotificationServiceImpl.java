@@ -29,7 +29,6 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserService userService;
     private final TrackingService trackingService;
-    private final UserServiceImpl userServiceImpl;
     private final DocumentService documentService;
 
     @Override
@@ -46,7 +45,7 @@ public class NotificationServiceImpl implements NotificationService {
         
         // Track notification creation
         trackingService.track(TrackingRequest.builder()
-            .actor(userServiceImpl.getCurrentUser())
+            .actor(userService.getCurrentUser())
             .entityType(TrackingEntityType.NOTIFICATION)
             .entityId(savedNotification.getNotificationId())
             .action(TrackingActionType.CREATE)
@@ -68,7 +67,7 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.save(notification);
         
         trackingService.track(TrackingRequest.builder()
-            .actor(userServiceImpl.getCurrentUser())
+            .actor(userService.getCurrentUser())
             .entityType(TrackingEntityType.NOTIFICATION)
             .entityId(notificationId)
             .action(TrackingActionType.UPDATE)

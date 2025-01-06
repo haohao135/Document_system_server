@@ -16,7 +16,7 @@ import com.document.demo.models.enums.UserStatus;
 import com.document.demo.models.tracking.ChangeLog;
 import com.document.demo.repository.DepartmentRepository;
 import com.document.demo.repository.UserRepository;
-import com.document.demo.service.FileStorageService;
+import com.document.demo.service.S3Service;
 import com.document.demo.service.TrackingService;
 import com.document.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,11 +44,11 @@ import static com.document.demo.utils.UpdateFieldUtils.updateField;
 @Slf4j
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService{
+    private final S3Service s3Service;
     private final UserRepository userRepository;
     private final TrackingService trackingService;
-    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-    private final FileStorageService fileStorageService;
     private final DepartmentRepository departmentRepository;
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
     @Transactional
@@ -165,7 +164,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     @Transactional
-    public void updateProfile(String userId, UpdateProfileRequest request) throws IOException {
+    public User updateProfile(String userId, UpdateProfileRequest request) {
         User user = getUserById(userId);
 
         Map<String, ChangeLog> changes = new HashMap<>();
@@ -175,12 +174,11 @@ public class UserServiceImpl implements UserService{
         updateField(changes, "phone", user.getPhone(), request.getPhone(), user::setPhone);
         updateField(changes, "position", user.getPosition(), request.getPosition(), user::setPosition);
 
-        // TODO: Remember uploaded file to Cloudinary before update user (avatar, background) and attachment in document
-        if(request.getAvatar() != null && !request.getAvatar().isEmpty()) {
+        if(request.getAvatarFile() != null && !request.getAvatarFile().isEmpty()) {
             changes.put("avatar", new ChangeLog());
             handleImageUpdate(request, user.getAvatar(), user::setAvatar);
         }
-        if (request.getBackground() != null && !request.getBackground().isEmpty()) {
+        if (request.getBackgroundFile() != null && !request.getBackgroundFile().isEmpty()) {
             changes.put("background", new ChangeLog());
             handleImageUpdate(request, user.getBackground(), user::setBackground);
         }
@@ -194,18 +192,20 @@ public class UserServiceImpl implements UserService{
             .entityId(userId)
             .action(TrackingActionType.UPDATE)
             .changes(changes)
-            .metadata(Map.of("idUser", savedUser.getUserId()))
+            .metadata(Map.of("id", savedUser.getUserId()))
             .build());
+
+        return savedUser;
     }
 
-    private void handleImageUpdate(UpdateProfileRequest request, String currentImagePath, Consumer<String> setter) throws IOException {
+    private void handleImageUpdate(UpdateProfileRequest request, String currentImagePath, Consumer<String> setter) {
         // Delete existing image if exists
         if (currentImagePath != null) {
-            fileStorageService.deleteFile(currentImagePath);
+            s3Service.deleteFile(currentImagePath);
         }
 
         // Store new image and get file path
-        String newImagePath = fileStorageService.storeFile(request.getAvatarFile());
+        String newImagePath = s3Service.uploadFile(request.getAvatarFile());
         setter.accept(newImagePath);
     }
 

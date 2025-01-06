@@ -1,6 +1,7 @@
 package com.document.demo.controller;
 
 import com.document.demo.dto.request.DepartmentRequest;
+import com.document.demo.dto.request.PositionRequest;
 import com.document.demo.dto.response.ErrorResponse;
 import com.document.demo.dto.response.SuccessResponse;
 import com.document.demo.exception.ResourceAlreadyExistsException;
@@ -86,9 +87,10 @@ public class DepartmentController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> addUserToDepartment(
             @RequestParam String id,
-            @RequestParam String userId) {
+            @RequestParam String userId,
+            @Valid @RequestBody PositionRequest request) {
         try {
-            Department updatedDepartment = departmentService.addUserToDepartment(id, userId);
+            Department updatedDepartment = departmentService.addUserToDepartment(id, userId, request);
 
             return ResponseEntity.ok(new SuccessResponse(
                 "User added to department successfully",
@@ -131,6 +133,7 @@ public class DepartmentController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getDepartmentById(@PathVariable String id) {
         try {
             Department department = departmentService.findById(id);

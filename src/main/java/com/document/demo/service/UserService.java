@@ -21,7 +21,7 @@ public interface UserService extends UserDetailsService {
     List<User> findByDepartment(String departmentId);
     List<User> findByRole(UserRole role);
     void changePassword(String userId, ChangePasswordRequest request, boolean isForgot);
-    void updateProfile(String userId, UpdateProfileRequest request) throws IOException;
+    User updateProfile(String userId, UpdateProfileRequest request) throws IOException;
     void updateStatus(String userId, UserStatus status);
     void updateRole(String userId, UserRole role);
     boolean existsByUsername(String username);

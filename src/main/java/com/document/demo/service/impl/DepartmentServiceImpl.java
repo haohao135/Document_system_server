@@ -1,5 +1,6 @@
 package com.document.demo.service.impl;
 
+import com.document.demo.dto.request.PositionRequest;
 import com.document.demo.dto.request.TrackingRequest;
 import com.document.demo.exception.ResourceAlreadyExistsException;
 import com.document.demo.exception.ResourceNotFoundException;
@@ -8,6 +9,7 @@ import com.document.demo.models.Department;
 import com.document.demo.models.User;
 import com.document.demo.models.enums.TrackingActionType;
 import com.document.demo.models.enums.TrackingEntityType;
+import com.document.demo.models.enums.UserRole;
 import com.document.demo.models.tracking.ChangeLog;
 import com.document.demo.repository.DepartmentRepository;
 import com.document.demo.repository.UserRepository;
@@ -126,7 +128,7 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     @Transactional
-    public Department addUserToDepartment(String id, String userId) {
+    public Department addUserToDepartment(String id, String userId, PositionRequest request) {
         Department department = findById(id);
         User user = userService.getUserById(userId);
 
@@ -142,6 +144,8 @@ public class DepartmentServiceImpl implements DepartmentService {
 
         // Add user to department
         user.setDepartment(department);
+        user.setPosition(request.getPosition());
+        user.setRole(request.getRole());
         userRepository.save(user);
 
         // Track user addition
@@ -174,6 +178,8 @@ public class DepartmentServiceImpl implements DepartmentService {
 
         // Remove user from department
         user.setDepartment(null);
+        user.setPosition(null);
+        user.setRole(UserRole.USER);
         userRepository.save(user);
 
         // Track user removal
