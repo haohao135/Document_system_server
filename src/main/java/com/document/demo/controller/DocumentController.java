@@ -2,6 +2,7 @@ package com.document.demo.controller;
 
 import com.document.demo.dto.request.DistributeRequest;
 import com.document.demo.dto.request.DocumentRequest;
+import com.document.demo.dto.request.SearchRequest;
 import com.document.demo.dto.response.*;
 import com.document.demo.models.Distribution;
 import com.document.demo.models.Documents;
@@ -214,6 +215,30 @@ public class DocumentController {
             return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse("Error retrieving documents: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/search")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> searchDocuments(@RequestBody SearchRequest request) {
+        log.info("Received search request: {}", request);
+
+        Sort.Direction direction = Sort.Direction.fromString(request.getSortDirection());
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), 
+                                         Sort.by(direction, request.getSortBy()));
+
+        try {
+            Page<Documents> results = documentService.searchDocuments(
+                request.getKeyword(),
+                request.getStartDate(),
+                request.getEndDate(),
+                pageable
+            );
+            return ResponseEntity.ok(PageResponse.from(results));
+        } catch (Exception e) {
+            log.error("Error searching documents: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("Error searching documents: " + e.getMessage()));
         }
     }
 } 

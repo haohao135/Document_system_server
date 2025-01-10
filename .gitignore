@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local ###
+.env
+.env.*
+*.properties
+!application.properties
+src/main/resources/application-*.properties
+backups/

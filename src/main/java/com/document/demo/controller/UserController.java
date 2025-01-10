@@ -52,10 +52,11 @@ public class UserController {
         }
     }
 
-    @PostMapping("/update-profile/{id}")
+    @PutMapping("/update-profile/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> updateProfile(@PathVariable String id,
                                               @Valid @ModelAttribute UpdateProfileRequest request) {
+        System.out.println("Update profile request: " + request);
         try {
             User user = userService.updateProfile(id, request);
             return ResponseEntity.ok(new SuccessResponse("Background updated successfully", user));
