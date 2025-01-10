@@ -35,4 +35,6 @@ public interface DocumentService {
 
     Page<Documents> findByTypeAndStatus(DocumentType type, DocumentStatus status, Pageable pageable);
     Page<Documents> findByStatus(DocumentStatus status, Pageable pageable);
+
+    Page<Documents> searchDocuments(String keyword, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 }

@@ -32,6 +32,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -175,37 +176,44 @@ public class UserServiceImpl implements UserService{
         updateField(changes, "position", user.getPosition(), request.getPosition(), user::setPosition);
 
         if(request.getAvatarFile() != null && !request.getAvatarFile().isEmpty()) {
-            changes.put("avatar", new ChangeLog());
-            handleImageUpdate(request, user.getAvatar(), user::setAvatar);
+            changes.put("avatar", ChangeLog.builder()
+                    .fieldName("avatar")
+                    .oldValue(user.getAvatar())
+                    .build());
+            handleImageUpdate(request.getAvatarFile(), user::setAvatar);
+            changes.get("avatar").setNewValue(user.getAvatar());
         }
         if (request.getBackgroundFile() != null && !request.getBackgroundFile().isEmpty()) {
-            changes.put("background", new ChangeLog());
-            handleImageUpdate(request, user.getBackground(), user::setBackground);
+            changes.put("background", ChangeLog.builder()
+                    .fieldName("background")
+                    .oldValue(user.getBackground())
+                    .build());
+            handleImageUpdate(request.getBackgroundFile(), user::setBackground);
+            changes.get("background").setNewValue(user.getBackground());
         }
 
-        User savedUser = userRepository.save(user);
+        if (!changes.isEmpty()) {
+            User savedUser = userRepository.save(user);
 
-        // Track user update
-        trackingService.track(TrackingRequest.builder()
-            .actor(getCurrentUser())
-            .entityType(TrackingEntityType.USER)
-            .entityId(userId)
-            .action(TrackingActionType.UPDATE)
-            .changes(changes)
-            .metadata(Map.of("id", savedUser.getUserId()))
-            .build());
+            // Track user update
+            trackingService.track(TrackingRequest.builder()
+                    .actor(getCurrentUser())
+                    .entityType(TrackingEntityType.USER)
+                    .entityId(userId)
+                    .action(TrackingActionType.UPDATE)
+                    .changes(changes)
+                    .metadata(Map.of("id", savedUser.getUserId()))
+                    .build());
 
-        return savedUser;
+            return savedUser;
+        }
+
+        return user;
     }
 
-    private void handleImageUpdate(UpdateProfileRequest request, String currentImagePath, Consumer<String> setter) {
-        // Delete existing image if exists
-        if (currentImagePath != null) {
-            s3Service.deleteFile(currentImagePath);
-        }
-
-        // Store new image and get file path
-        String newImagePath = s3Service.uploadFile(request.getAvatarFile());
+    private void handleImageUpdate(MultipartFile file, Consumer<String> setter) {
+        // Store new image and get file path (maybe delete old image if needed)
+        String newImagePath = s3Service.uploadFile(file);
         setter.accept(newImagePath);
     }
 

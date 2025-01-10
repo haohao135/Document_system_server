@@ -17,6 +17,7 @@ import com.document.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -297,6 +298,43 @@ public class DocumentServiceImpl implements DocumentService {
         } catch (Exception e) {
             log.error("Error finding documents by status: {}", status, e);
             throw new RuntimeException("Error finding documents by status", e);
+        }
+    }
+
+    @Override
+    public Page<Documents> searchDocuments(String keyword, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        try {
+            if (keyword == null || keyword.trim().isEmpty()) {
+                return findAll(pageable);
+            }
+
+            // Normalize keyword
+            keyword = keyword.trim().toLowerCase();
+
+            // Set default dates if not provided
+            LocalDateTime effectiveStartDate = startDate != null ? startDate : LocalDateTime.of(1970, 1, 1, 0, 0);
+            LocalDateTime effectiveEndDate = endDate != null ? endDate : LocalDateTime.now();
+
+            // Get results from MongoDB query
+            List<Documents> results = documentRepository.searchDocumentsWithCreator(
+                keyword, 
+                effectiveStartDate, 
+                effectiveEndDate
+            );
+
+            // Manual pagination
+            int start = (int) pageable.getOffset();
+            int end = Math.min(start + pageable.getPageSize(), results.size());
+
+            return new PageImpl<>(
+                results.subList(start, end),
+                pageable,
+                results.size()
+            );
+        } catch (Exception e) {
+            log.error("Error searching documents with keyword: {} and date range: {} to {}", 
+                      keyword, startDate, endDate, e);
+            throw new RuntimeException("Error searching documents", e);
         }
     }
 }
