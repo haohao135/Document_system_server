@@ -61,6 +61,11 @@ public interface DocumentRepository extends MongoRepository<Documents, String> {
         // Match với điều kiện tìm kiếm
         "{ $match: { " +
             "$and: [ " +
+                // Type condition (if provided)
+                "{ $or: [ " +
+                    "{ 'type': ?3 }, " +  // Match exact type if provided
+                    "{ $expr: { $eq: [?3, null] } }" +  // Skip type condition if null
+                "] }, " +
                 // Date range condition (if provided)
                 "{ $or: [ " +
                     "{ 'issueDate': { $gte: ?1, $lte: ?2 }}, " +
@@ -91,5 +96,11 @@ public interface DocumentRepository extends MongoRepository<Documents, String> {
         // Sort
         "{ $sort: { 'createdAt': -1 } }"
     })
-    List<Documents> searchDocumentsWithCreator(String keyword, LocalDateTime startDate, LocalDateTime endDate);
+    List<Documents> searchDocumentsWithCreator(String keyword, LocalDateTime startDate, LocalDateTime endDate, DocumentType type);
+
+    @Query(value = "{ 'type': ?0 }", count = true)
+    long countByType(DocumentType type);
+
+    @Query(value = "{ 'type': ?0, 'status': ?1 }", count = true)
+    long countByTypeAndStatus(DocumentType type, DocumentStatus status);
 }

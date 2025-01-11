@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public interface DocumentService {
     Documents createDocument(DocumentRequest document) throws IOException;
@@ -36,5 +37,8 @@ public interface DocumentService {
     Page<Documents> findByTypeAndStatus(DocumentType type, DocumentStatus status, Pageable pageable);
     Page<Documents> findByStatus(DocumentStatus status, Pageable pageable);
 
-    Page<Documents> searchDocuments(String keyword, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+    Page<Documents> searchDocuments(String keyword, DocumentType type, LocalDateTime startDate,
+                                    LocalDateTime endDate, Pageable pageable);
+
+    Map<DocumentStatus, Long> getStatusCountsByType(DocumentType type);
 }

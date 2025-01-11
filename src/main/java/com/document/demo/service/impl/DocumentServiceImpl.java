@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.EnumMap;
 
 import static com.document.demo.utils.UpdateFieldUtils.updateField;
 
@@ -302,10 +303,13 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public Page<Documents> searchDocuments(String keyword, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+    public Page<Documents> searchDocuments(String keyword, DocumentType type, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
         try {
             if (keyword == null || keyword.trim().isEmpty()) {
-                return findAll(pageable);
+                if(type != null)
+                    return findByType(type, pageable);
+                else
+                    return findAll(pageable);
             }
 
             // Normalize keyword
@@ -319,7 +323,8 @@ public class DocumentServiceImpl implements DocumentService {
             List<Documents> results = documentRepository.searchDocumentsWithCreator(
                 keyword, 
                 effectiveStartDate, 
-                effectiveEndDate
+                effectiveEndDate,
+                type
             );
 
             // Manual pagination
@@ -336,5 +341,15 @@ public class DocumentServiceImpl implements DocumentService {
                       keyword, startDate, endDate, e);
             throw new RuntimeException("Error searching documents", e);
         }
+    }
+
+    @Override
+    public Map<DocumentStatus, Long> getStatusCountsByType(DocumentType type) {
+        Map<DocumentStatus, Long> statusCounts = new EnumMap<>(DocumentStatus.class);
+        for (DocumentStatus status : DocumentStatus.values()) {
+            long count = documentRepository.countByTypeAndStatus(type, status);
+            statusCounts.put(status, count);
+        }
+        return statusCounts;
     }
 }
