@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.EnumMap;
 
 @RestController
 @RequestMapping("/api/documents")
@@ -169,6 +171,7 @@ public class DocumentController {
                     .number(doc.getNumber())
                     .title(doc.getTitle())
                     .content(doc.getContent())
+                    .agencyUnit(doc.getAgencyUnit())
                     .issueDate(doc.getIssueDate())
                     .receivedDate(doc.getReceivedDate())
                     .sendDate(doc.getSendDate())
@@ -180,10 +183,18 @@ public class DocumentController {
                     .keywords(doc.getKeywords())
                     .logNote(doc.getLogNote())
                     .createdAt(doc.getCreatedAt())
+                    .creator(doc.getCreateBy())
                     .build()
             );
 
-            return ResponseEntity.ok(new SuccessResponse("Documents retrieved successfully", responses));
+            Map<DocumentStatus, Long> statusCounts = type != null ? 
+                documentService.getStatusCountsByType(type) : 
+                new EnumMap<>(DocumentStatus.class);
+
+            return ResponseEntity.ok(new SuccessResponse(
+                "Documents retrieved successfully", 
+                PageWithStatusCountResponse.from(responses, statusCounts)
+            ));
         } catch (Exception e) {
             return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -203,6 +214,7 @@ public class DocumentController {
         try {
             Page<Documents> results = documentService.searchDocuments(
                 request.getKeyword(),
+                request.getType(),
                 request.getStartDate(),
                 request.getEndDate(),
                 pageable
@@ -212,6 +224,47 @@ public class DocumentController {
             log.error("Error searching documents: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse("Error searching documents: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getDocumentById(@PathVariable String id) {
+        try {
+            Documents document = documentService.findById(id);
+            
+            DocumentResponse response = DocumentResponse.builder()
+                    .documentId(document.getDocumentId())
+                    .number(document.getNumber())
+                    .title(document.getTitle())
+                    .content(document.getContent())
+                    .issueDate(document.getIssueDate())
+                    .receivedDate(document.getReceivedDate())
+                    .sendDate(document.getSendDate())
+                    .expirationDate(document.getExpirationDate())
+                    .agencyUnit(document.getAgencyUnit())
+                    .type(document.getType())
+                    .urgencyLevel(document.getUrgencyLevel())
+                    .attachment(document.getAttachment())
+                    .keywords(document.getKeywords())
+                    .logNote(document.getLogNote())
+                    .status(document.getStatus())
+                    .createdAt(document.getCreatedAt())
+                    .creator(document.getCreateBy())
+                    .build();
+
+            return ResponseEntity.ok(new SuccessResponse(
+                "Document retrieved successfully", 
+                response
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("Document not found with id: " + id));
+        } catch (Exception e) {
+            return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("Error retrieving document: " + e.getMessage()));
         }
     }
 } 
