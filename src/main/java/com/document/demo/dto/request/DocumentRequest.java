@@ -3,6 +3,7 @@ package com.document.demo.dto.request;
 import com.document.demo.models.enums.DocumentStatus;
 import com.document.demo.models.enums.DocumentType;
 import com.document.demo.models.enums.UrgencyLevel;
+import com.document.demo.models.enums.SecretLevel;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -58,4 +59,7 @@ public class DocumentRequest {
 
     @NotNull(message = "User is required")
     private String userId;
+
+    @Builder.Default
+    private SecretLevel secretLevel = SecretLevel.LOW;
 } 

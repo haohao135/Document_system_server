@@ -4,6 +4,7 @@ import com.document.demo.models.User;
 import com.document.demo.models.enums.DocumentStatus;
 import com.document.demo.models.enums.DocumentType;
 import com.document.demo.models.enums.UrgencyLevel;
+import com.document.demo.models.enums.SecretLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,4 +34,5 @@ public class DocumentResponse {
     private String logNote;
     private LocalDateTime createdAt;
     private User creator;
+    private SecretLevel secretLevel;
 } 

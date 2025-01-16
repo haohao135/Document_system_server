@@ -4,6 +4,7 @@ import com.document.demo.models.Documents;
 import com.document.demo.models.User;
 import com.document.demo.models.enums.DocumentStatus;
 import com.document.demo.models.enums.DocumentType;
+import com.document.demo.models.enums.SecretLevel;
 import com.document.demo.models.enums.UrgencyLevel;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -85,6 +86,7 @@ public interface DocumentRepository extends MongoRepository<Documents, String> {
                     "{ 'type': { $regex: ?0, $options: 'i' }}, " +
                     "{ 'status': { $regex: ?0, $options: 'i' }}, " +
                     "{ 'urgencyLevel': { $regex: ?0, $options: 'i' }}, " +
+                    "{ 'secretLevel': { $regex: ?0, $options: 'i' }}, " +
                     
                     // User fields
                     "{ 'creator.username': { $regex: ?0, $options: 'i' }}, " +
@@ -103,4 +105,45 @@ public interface DocumentRepository extends MongoRepository<Documents, String> {
 
     @Query(value = "{ 'type': ?0, 'status': ?1 }", count = true)
     long countByTypeAndStatus(DocumentType type, DocumentStatus status);
+
+    @Aggregation(pipeline = {
+        "{ $match: { 'agencyUnit': { $regex: ?0, $options: 'i' } } }",
+        "{ $group: { _id: '$agencyUnit' } }",
+        "{ $limit: ?1 }"
+    })
+    List<String> suggestAgencyUnits(String keyword, int limit);
+
+    @Query("{ $and: [ " +
+           "{ 'type': ?0 }, " +
+           "{ 'agencyUnit': { $regex: ?1, $options: 'i' } }, " +
+           "{ $or: [ " +
+               "{ 'status': ?2 }, " +
+               "{ $expr: { $eq: [?2, null] } }" +
+           "] }, " +
+           "{ $or: [ " +
+               "{ 'urgencyLevel': ?3 }, " +
+               "{ $expr: { $eq: [?3, null] } }" +
+           "] }, " +
+           "{ $or: [ " +
+               "{ 'secretLevel': ?4 }, " +
+               "{ $expr: { $eq: [?4, null] } }" +
+           "] }, " +
+           "{ $or: [ " +
+               "{ 'receivedDate': { $gte: ?5, $lte: ?6 } }, " +
+               "{ $and: [ " +
+                   "{ $expr: { $eq: [?5, null] } }, " +
+                   "{ $expr: { $eq: [?6, null] } } " +
+               "] }" +
+           "] }" +
+           "] }")
+    Page<Documents> filterDocuments(
+        DocumentType type,
+        String agencyUnit,
+        DocumentStatus status,
+        UrgencyLevel urgencyLevel,
+        SecretLevel secretLevel,
+        LocalDateTime startDate,
+        LocalDateTime endDate,
+        Pageable pageable
+    );
 }

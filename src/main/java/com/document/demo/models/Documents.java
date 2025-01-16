@@ -2,6 +2,7 @@ package com.document.demo.models;
 
 import com.document.demo.models.enums.DocumentStatus;
 import com.document.demo.models.enums.DocumentType;
+import com.document.demo.models.enums.SecretLevel;
 import com.document.demo.models.enums.UrgencyLevel;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -45,7 +46,6 @@ public class Documents implements Cloneable{
     private String agencyUnit;
 
     @Builder.Default
-    @NotNull(message = "Document type is required")
     @Enumerated(EnumType.STRING)
     private DocumentType type = DocumentType.UNKNOWN;
     
@@ -57,10 +57,14 @@ public class Documents implements Cloneable{
     private String attachment;
     private String keywords;
     
-    @NotNull(message = "Urgency level is required")
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     private UrgencyLevel urgencyLevel = UrgencyLevel.NORMAL;
-    
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    private SecretLevel secretLevel = SecretLevel.LOW;
+
     @Builder.Default
     private LocalDateTime expirationDate = LocalDateTime.now().plusDays(30);
 

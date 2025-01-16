@@ -3,6 +3,7 @@ package com.document.demo.controller;
 import com.document.demo.dto.request.DistributeRequest;
 import com.document.demo.dto.request.DocumentRequest;
 import com.document.demo.dto.request.SearchRequest;
+import com.document.demo.dto.request.FilterRequest;
 import com.document.demo.dto.response.*;
 import com.document.demo.models.Distribution;
 import com.document.demo.models.Documents;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.EnumMap;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/documents")
@@ -41,6 +43,7 @@ public class DocumentController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<DocumentResponse> createDocument(
             @Valid @ModelAttribute DocumentRequest request) throws IOException {
+        log.info("Create Document: {}", request);
 
         Documents document = documentService.createDocument(request);
 
@@ -62,11 +65,12 @@ public class DocumentController {
                 .status(document.getStatus())
                 .createdAt(document.getCreatedAt())
                 .creator(document.getCreateBy())
+                .secretLevel(document.getSecretLevel())
                 .build();
 
         return ResponseEntity.ok(response);
     }
-    @PostMapping("/update")
+    @PostMapping("/update/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<DocumentResponse> updateDocument(
             @Valid @ModelAttribute DocumentRequest request, @PathVariable String id) throws IOException{
@@ -89,6 +93,7 @@ public class DocumentController {
                 .status(document.getStatus())
                 .createdAt(document.getCreatedAt())
                 .creator(document.getCreateBy())
+                .secretLevel(document.getSecretLevel())
                 .build();
 
         return ResponseEntity.ok(response);
@@ -157,6 +162,7 @@ public class DocumentController {
                     .logNote(doc.getLogNote())
                     .createdAt(doc.getCreatedAt())
                     .creator(doc.getCreateBy())
+                    .secretLevel(doc.getSecretLevel())
                     .build()
                 ).toList();
 
@@ -211,6 +217,7 @@ public class DocumentController {
                     .logNote(doc.getLogNote())
                     .createdAt(doc.getCreatedAt())
                     .creator(doc.getCreateBy())
+                    .secretLevel(doc.getSecretLevel())
                     .build()
             );
 
@@ -278,6 +285,7 @@ public class DocumentController {
                     .status(document.getStatus())
                     .createdAt(document.getCreatedAt())
                     .creator(document.getCreateBy())
+                    .secretLevel(document.getSecretLevel())
                     .build();
 
             return ResponseEntity.ok(new SuccessResponse(
@@ -292,6 +300,84 @@ public class DocumentController {
             return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse("Error retrieving document: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/agency-units/suggest")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> suggestAgencyUnits(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "5") int limit
+    ) {
+        log.info("Received agency unit suggestion request with keyword: {}", keyword);
+        try {
+            if (limit < 1) {
+                return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse("Limit must be greater than 0"));
+            }
+
+            List<String> suggestions = documentService.suggestAgencyUnits(keyword, limit);
+            
+            return ResponseEntity.ok(new SuccessResponse(
+                "Agency units suggestions retrieved successfully",
+                new AgencyUnitSuggestResponse(suggestions)
+            ));
+        } catch (Exception e) {
+            log.error("Error suggesting agency units: ", e);
+            return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("Error suggesting agency units: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/filter")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> filterDocuments(FilterRequest request) {
+        try {
+            Pageable pageable = PageRequest.of(
+                request.getPage(), 
+                request.getSize(), 
+                Sort.by(Sort.Direction.DESC, "createdAt")
+            );
+
+            Page<Documents> documents = documentService.filterDocuments(
+                request,
+                pageable
+            );
+
+            FilterResponse response = FilterResponse.builder()
+                .content(documents.getContent().stream()
+                    .map(doc -> FilterResponse.DocumentFilterDTO.builder()
+                        .documentId(doc.getDocumentId())
+                        .number(doc.getNumber())
+                        .title(doc.getTitle())
+                        .agencyUnit(doc.getAgencyUnit())
+                        .status(doc.getStatus())
+                        .urgencyLevel(doc.getUrgencyLevel())
+                        .secretLevel(doc.getSecretLevel())
+                        .issueDate(doc.getIssueDate())
+                        .receivedDate(doc.getReceivedDate())
+                        .createdAt(doc.getCreatedAt())
+                        .build())
+                    .collect(Collectors.toList()))
+                .pageable(FilterResponse.PageableResponse.builder()
+                    .number(documents.getNumber())
+                    .size(documents.getSize())
+                    .totalElements(documents.getTotalElements())
+                    .totalPages(documents.getTotalPages())
+                    .build())
+                .build();
+
+            return ResponseEntity.ok(new SuccessResponse(
+                "Documents filtered successfully", 
+                response
+            ));
+        } catch (Exception e) {
+            log.error("Error filtering documents: ", e);
+            return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("Error filtering documents: " + e.getMessage()));
         }
     }
 } 

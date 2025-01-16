@@ -1,9 +1,11 @@
 package com.document.demo.service;
 
 import com.document.demo.dto.request.DocumentRequest;
+import com.document.demo.dto.request.FilterRequest;
 import com.document.demo.models.Documents;
 import com.document.demo.models.enums.DocumentStatus;
 import com.document.demo.models.enums.DocumentType;
+import com.document.demo.models.enums.SecretLevel;
 import com.document.demo.models.enums.UrgencyLevel;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.springframework.data.domain.Page;
@@ -41,4 +43,11 @@ public interface DocumentService {
                                     LocalDateTime endDate, Pageable pageable);
 
     Map<DocumentStatus, Long> getStatusCountsByType(DocumentType type);
+
+    List<String> suggestAgencyUnits(String keyword, int limit);
+
+    Page<Documents> filterDocuments(
+            FilterRequest request,
+            Pageable pageable
+    );
 }

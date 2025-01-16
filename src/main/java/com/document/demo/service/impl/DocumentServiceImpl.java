@@ -1,6 +1,7 @@
 package com.document.demo.service.impl;
 
 import com.document.demo.dto.request.DocumentRequest;
+import com.document.demo.dto.request.FilterRequest;
 import com.document.demo.dto.request.TrackingRequest;
 import com.document.demo.exception.InvalidEnumValueException;
 import com.document.demo.exception.ResourceAlreadyExistsException;
@@ -351,5 +352,38 @@ public class DocumentServiceImpl implements DocumentService {
             statusCounts.put(status, count);
         }
         return statusCounts;
+    }
+
+    @Override
+    public List<String> suggestAgencyUnits(String keyword, int limit) {
+        try {
+            String searchKeyword = keyword != null ? keyword : "";
+            return documentRepository.suggestAgencyUnits(searchKeyword, limit);
+        } catch (Exception e) {
+            log.error("Error suggesting agency units for keyword: {}", keyword, e);
+            throw new RuntimeException("Error suggesting agency units", e);
+        }
+    }
+
+    @Override
+    public Page<Documents> filterDocuments(
+        FilterRequest request,
+        Pageable pageable
+    ) {
+        try {
+            return documentRepository.filterDocuments(
+                request.getType(),
+                request.getAgencyUnit() != null ? request.getAgencyUnit() : "",
+                request.getStatus(),
+                request.getUrgencyLevel(),
+                request.getSecretLevel(),
+                request.getStartDate(),
+                request.getEndDate(),
+                pageable
+            );
+        } catch (Exception e) {
+            log.error("Error filtering documents", e);
+            throw new RuntimeException("Error filtering documents", e);
+        }
     }
 }
