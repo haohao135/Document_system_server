@@ -146,4 +146,9 @@ public interface DocumentRepository extends MongoRepository<Documents, String> {
         LocalDateTime endDate,
         Pageable pageable
     );
+    @Query("{'type': ?0, 'createdAt': { $gte: ?1, $lt: ?2 }}")
+    long countByTypeAndDateRange(DocumentType type, LocalDateTime startDate, LocalDateTime endDate);
+
+    @Query("{'createdAt': { $gte: ?0, $lt: ?1 }}")
+    long countByDateRange(LocalDateTime startDate, LocalDateTime endDate);
 }
