@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @AllArgsConstructor
 @Builder
 @Document(collection = "supports")
-public class SupportRequest {
+public class Support {
     @Id
     private String supportId;
     private String type;

@@ -2,7 +2,7 @@ package com.document.demo.service.impl;
 
 import com.document.demo.dto.request.SupportUpdateRequest;
 import com.document.demo.exception.ResourceNotFoundException;
-import com.document.demo.models.SupportRequest;
+import com.document.demo.models.Support;
 import com.document.demo.repository.SupportRequestRepository;
 import com.document.demo.service.SupportRequestService;
 import lombok.RequiredArgsConstructor;
@@ -21,22 +21,22 @@ public class SupportRequestServiceImp implements SupportRequestService {
     private SupportRequestRepository supportRequestRepository;
 
     @Override
-    public SupportRequest createSupport(SupportRequest supportRequest) {
+    public Support createSupport(Support supportRequest) {
         return supportRequestRepository.save(supportRequest);
     }
 
     @Override
-    public List<SupportRequest> getAllSupportRequest() {
+    public List<Support> getAllSupportRequest() {
         return supportRequestRepository.findAll();
     }
 
     @Override
-    public SupportRequest getSupportRequestById(String id) {
+    public Support getSupportRequestById(String id) {
         return supportRequestRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Not found support"));
     }
 
     @Override
-    public Optional<SupportRequest> updateSupportRequest(String id, SupportUpdateRequest supportUpdateRequest) {
+    public Optional<Support> updateSupportRequest(String id, SupportUpdateRequest supportUpdateRequest) {
         return supportRequestRepository.findById(id).map(
                 existingRequest -> {
                     existingRequest.setTitle(supportUpdateRequest.getTitle());
