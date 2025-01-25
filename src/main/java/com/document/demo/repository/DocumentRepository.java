@@ -14,6 +14,7 @@ import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -146,4 +147,9 @@ public interface DocumentRepository extends MongoRepository<Documents, String> {
         LocalDateTime endDate,
         Pageable pageable
     );
+    @Query(value = "{'type': ?0, 'createdAt': { $gte: ?1, $lt: ?2 }}", count = true)
+    long countByTypeAndDateRange(String type, Date startDate, Date endDate);
+
+    @Query(value = "{'createdAt': { $gte: ?0, $lt: ?1 }}", count = true)
+    long countByDateRange(Date startDate, Date endDate);
 }
