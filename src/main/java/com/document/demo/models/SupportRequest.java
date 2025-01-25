@@ -18,7 +18,7 @@ public class SupportRequest {
     private String supportId;
     private String type;
     private String title;
-    private String description;
+    private String content;
     private String status;
     @DBRef
     private String createBy;
